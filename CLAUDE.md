@@ -4,7 +4,7 @@ This file provides guidance to AI assistants (Claude and others) working in this
 
 ## Repository Status
 
-This repository is in initial setup. No source code, configuration, or dependencies have been committed yet. This file serves as a foundation for conventions and workflows that should be followed as the project develops.
+Active development. This repository contains an RFP Analysis Agent — a Claude-powered REST API for scoring and analysing RFP responses, compatible with Microsoft Copilot Studio.
 
 ## Repository Overview
 
@@ -12,14 +12,13 @@ This repository is in initial setup. No source code, configuration, or dependenc
 **Owner:** bobbynoble
 **Branch Convention:** Feature branches use the format `claude/<description>-<session-id>`
 
-## Project Setup (To Be Established)
+## Project Setup
 
-When initializing this project, update this file with:
-
-- **Language / Runtime:** (e.g., TypeScript/Node.js, Python, Go)
-- **Framework:** (e.g., Next.js, FastAPI, Express)
-- **Package Manager:** (e.g., npm, yarn, pnpm, pip, cargo)
-- **Database:** (e.g., PostgreSQL, SQLite, MongoDB)
+- **Language / Runtime:** Python 3.11+
+- **Framework:** FastAPI + Uvicorn
+- **Package Manager:** pip (`requirements.txt`)
+- **AI Model:** Claude Opus 4.6 via Anthropic Python SDK
+- **Database:** None (stateless API)
 
 ## Development Workflow
 
@@ -111,51 +110,42 @@ When a test framework is established, document here:
 
 Always run tests before committing. Fix failures before pushing.
 
-## Common Commands (Update When Project Is Set Up)
+## Common Commands
 
 ```bash
 # Install dependencies
-<install command>
+pip install -r requirements.txt
 
-# Start development server
-<dev command>
+# Start development server (auto-reload)
+uvicorn src.main:app --reload --port 8000
 
-# Build for production
-<build command>
+# Start production server
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4
 
-# Run linter
-<lint command>
+# View interactive API docs
+open http://localhost:8000/docs
 
-# Format code
-<format command>
-
-# Run type checker
-<typecheck command>
+# Download OpenAPI spec (for Copilot Studio import)
+curl http://localhost:8000/openapi.json -o openapi.json
 ```
 
 ## Environment Setup
 
-When environment variables are required:
+1. Copy `.env.example` to `.env` (never commit `.env`)
+2. Set `ANTHROPIC_API_KEY` — required
+3. Set `RFP_API_KEY` — optional; when set, callers must send `X-API-Key: <value>`
+4. Set `CORS_ORIGINS` — optional; defaults to `*`
 
-1. Copy `.env.example` to `.env.local` (never commit `.env.local`)
-2. Fill in required values
-3. Document all variables in `.env.example` with descriptions but no real values
-
-## Directory Structure (To Be Defined)
-
-Update this section when the project structure is established. A typical structure might look like:
+## Directory Structure
 
 ```
 /
-├── src/              # Source code
-│   ├── components/   # UI components (if applicable)
-│   ├── lib/          # Shared utilities and helpers
-│   ├── api/          # API routes or service layer
-│   └── types/        # Type definitions
-├── tests/            # Test files (or co-located *.test.* files)
-├── docs/             # Documentation
-├── .github/          # GitHub Actions workflows
-├── package.json      # Dependencies and scripts
+├── src/
+│   ├── __init__.py
+│   ├── main.py       # FastAPI app — routes, CORS, auth middleware
+│   ├── agent.py      # Claude Opus 4.6 RFP analysis logic
+│   └── models.py     # Pydantic request/response schemas
+├── requirements.txt
 ├── .env.example      # Environment variable template
 └── CLAUDE.md         # This file
 ```
