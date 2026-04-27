@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFP Analysis Agent</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222636;
+      --border: #2e3347;
+      --accent: #6c7fff;
+      --accent-dim: #3d4a99;
+      --green: #3ecf8e;
+      --yellow: #f5a623;
+      --orange: #f97316;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --text-dim: #8892a4;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    html { font-size: 15px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header p { font-size: 0.82rem; color: var(--text-dim); }
+    .header-right { margin-left: auto; }
+    .model-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Form ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr; } }
+
+    label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.35rem; }
+    label span { color: var(--text-dim); font-weight: 400; }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.875rem;
+      padding: 0.65rem 0.85rem;
+      resize: vertical;
+      transition: border-color 0.15s;
+    }
+    textarea:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    textarea { min-height: 180px; }
+    .full-width { grid-column: 1 / -1; }
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    .error-msg {
+      display: none;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.35);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      color: #fca5a5;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+    }
+
+    /* ── Results ── */
+    #results { display: none; }
+
+    /* Score hero */
+    .score-hero {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .score-circle {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      border: 4px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .score-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .score-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
+
+    .hero-meta { flex: 1; min-width: 200px; }
+    .win-prob {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.3rem 0.85rem;
+      border-radius: 20px;
+      margin-bottom: 0.6rem;
+    }
+    .win-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .executive-summary {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
+
+    /* Section scores */
+    .section-list { display: flex; flex-direction: column; gap: 0.85rem; }
+
+    .section-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-name { font-weight: 600; font-size: 0.9rem; flex: 1; }
+    .section-score-badge {
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.15rem 0.6rem;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .section-bar-wrap {
+      background: var(--border);
+      border-radius: 4px;
+      height: 5px;
+      margin-bottom: 0.7rem;
+      overflow: hidden;
+    }
+    .section-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .section-detail { font-size: 0.83rem; color: var(--text-dim); }
+    .section-detail p { margin-bottom: 0.5rem; }
+    .swlist { list-style: none; padding-left: 0; }
+    .swlist li { padding: 0.15rem 0; padding-left: 1.1rem; position: relative; font-size: 0.82rem; }
+    .swlist.strengths li::before { content: "+"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+    .swlist.weaknesses li::before { content: "−"; position: absolute; left: 0; color: var(--red); font-weight: 700; }
+
+    /* Action items */
+    .action-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .action-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem;
+      align-items: start;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+    .priority-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+    .action-body { }
+    .action-area { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.2rem; }
+    .action-text { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.2rem; }
+    .action-impact { font-size: 0.8rem; color: var(--text-dim); }
+
+    /* Lists (strategic / risks / compliance / areas) */
+    .simple-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+    .simple-list li {
+      padding: 0.6rem 0.85rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      padding-left: 2.2rem;
+      position: relative;
+    }
+    .simple-list li::before {
+      position: absolute;
+      left: 0.75rem;
+      top: 0.62rem;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      content: "";
+      background: var(--accent);
+    }
+    .simple-list.risk li::before { background: var(--orange); }
+    .simple-list.compliance li::before { background: var(--red); }
+    .simple-list.good-areas li::before { background: var(--green); }
+    .simple-list.attention li::before { background: var(--yellow); }
+
+    /* Two-column layout for smaller lists */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* Chevron toggle */
+    .chevron {
+      width: 16px; height: 16px;
+      border: none; background: none; cursor: pointer;
+      color: var(--text-dim);
+      transition: transform 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .chevron svg { display: block; }
+    .chevron.open { transform: rotate(180deg); }
+
+    /* Color helpers */
+    .c-green { color: var(--green); }
+    .c-yellow { color: var(--yellow); }
+    .c-orange { color: var(--orange); }
+    .c-red { color: var(--red); }
+    .c-accent { color: var(--accent); }
+
+    .bg-green { background: rgba(62,207,142,0.18); color: var(--green); }
+    .bg-yellow { background: rgba(245,166,35,0.18); color: var(--yellow); }
+    .bg-orange { background: rgba(249,115,22,0.18); color: var(--orange); }
+    .bg-red { background: rgba(239,68,68,0.18); color: var(--red); }
+    .bg-accent { background: rgba(108,127,255,0.18); color: var(--accent); }
+
+    .border-green { border-color: rgba(62,207,142,0.35) !important; }
+    .border-yellow { border-color: rgba(245,166,35,0.35) !important; }
+    .border-orange { border-color: rgba(249,115,22,0.35) !important; }
+    .border-red { border-color: rgba(239,68,68,0.35) !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">R</div>
+  <div>
+    <h1>RFP Analysis Agent</h1>
+    <p>AI-powered bid evaluation &amp; scoring</p>
+  </div>
+  <div class="header-right">
+    <span class="model-badge">Claude Opus 4.6</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Input form -->
+  <div class="card" id="form-card">
+    <div class="card-title">Submit Documents for Analysis</div>
+
+    <div class="form-grid">
+      <div>
+        <label for="rfp-doc">RFP / Tender Document <span>*</span></label>
+        <textarea id="rfp-doc" placeholder="Paste the original RFP or tender document here — requirements, evaluation criteria, instructions to bidders, statement of work…"></textarea>
+      </div>
+      <div>
+        <label for="resp-doc">Bid / Response Document <span>*</span></label>
+        <textarea id="resp-doc" placeholder="Paste the vendor's bid or response document here — technical approach, pricing, team, timeline…"></textarea>
+      </div>
+      <div>
+        <label for="criteria">Custom Evaluation Criteria <span>(optional — JSON)</span></label>
+        <textarea id="criteria" style="min-height:80px" placeholder='{"Technical Approach": 40, "Price": 30, "Past Performance": 30}'></textarea>
+      </div>
+      <div>
+        <label for="context">Additional Context <span>(optional)</span></label>
+        <textarea id="context" style="min-height:80px" placeholder="Industry sector, competitive landscape, budget constraints, client priorities…"></textarea>
+      </div>
+      <div class="full-width">
+        <label for="api-key">API Key <span>(optional — only required if the server enforces one)</span></label>
+        <input type="text" id="api-key" placeholder="Your X-API-Key value" />
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-primary" id="analyze-btn" onclick="runAnalysis()">Analyse RFP</button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+      <div class="spinner" id="spinner"></div>
+      <span id="status-text" style="font-size:0.82rem; color:var(--text-dim);"></span>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Score hero -->
+    <div class="card">
+      <div class="card-title">Overall Assessment</div>
+      <div class="score-hero">
+        <div class="score-circle" id="score-circle">
+          <span class="score-num" id="score-num">—</span>
+          <span class="score-label">/ 100</span>
+        </div>
+        <div class="hero-meta">
+          <div class="win-prob" id="win-prob-badge">
+            <span class="win-dot" id="win-dot"></span>
+            <span id="win-prob-text">—</span>
+          </div>
+          <div class="executive-summary" id="exec-summary"></div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.4rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Competitive Position</p>
+          <p id="competitive-position" style="font-size:0.875rem;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- High/low areas -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">High-Scoring Areas</div>
+        <ul class="simple-list good-areas" id="high-areas"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Areas Needing Attention</div>
+        <ul class="simple-list attention" id="low-areas"></ul>
+      </div>
+    </div>
+
+    <!-- Section scores -->
+    <div class="card">
+      <div class="card-title">Section Scores</div>
+      <div class="section-list" id="section-list"></div>
+    </div>
+
+    <!-- Action items -->
+    <div class="card">
+      <div class="card-title">Action Items</div>
+      <div class="action-list" id="action-list"></div>
+    </div>
+
+    <!-- Strategic / Risk / Compliance -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Strategic Recommendations</div>
+        <ul class="simple-list" id="strategic-list"></ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Risk Factors</div>
+        <ul class="simple-list risk" id="risk-list"></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Compliance Gaps</div>
+      <ul class="simple-list compliance" id="compliance-list"></ul>
+    </div>
+
+    <div style="text-align:center;margin-top:1rem;">
+      <button class="btn-secondary" onclick="scrollToForm()">Run Another Analysis</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ── helpers ─────────────────────────────────────────────────────────────────
+
+  function scoreColor(s) {
+    if (s >= 75) return 'green';
+    if (s >= 60) return 'yellow';
+    if (s >= 40) return 'orange';
+    return 'red';
+  }
+
+  function winProbColor(wp) {
+    const map = {
+      'very high': 'green',
+      'high': 'green',
+      'medium': 'yellow',
+      'low': 'orange',
+      'very low': 'red',
+    };
+    return map[(wp || '').toLowerCase()] || 'accent';
+  }
+
+  function priorityColor(p) {
+    const map = { critical: 'red', high: 'orange', medium: 'yellow', low: 'accent' };
+    return map[(p || '').toLowerCase()] || 'accent';
+  }
+
+  function el(id) { return document.getElementById(id); }
+
+  function populateList(listId, items, cls = '') {
+    const ul = el(listId);
+    ul.innerHTML = '';
+    (items || []).forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      ul.appendChild(li);
+    });
+  }
+
+  // ── main logic ───────────────────────────────────────────────────────────────
+
+  async function runAnalysis() {
+    const rfp = el('rfp-doc').value.trim();
+    const resp = el('resp-doc').value.trim();
+
+    if (!rfp || !resp) {
+      showError('Both the RFP document and the Response document are required.');
+      return;
+    }
+
+    hideError();
+    setLoading(true);
+    el('results').style.display = 'none';
+
+    const body = { rfp_document: rfp, response_document: resp };
+
+    const criteriaRaw = el('criteria').value.trim();
+    if (criteriaRaw) {
+      try { body.evaluation_criteria = JSON.parse(criteriaRaw); }
+      catch { showError('Custom Evaluation Criteria must be valid JSON.'); setLoading(false); return; }
+    }
+
+    const ctx = el('context').value.trim();
+    if (ctx) body.additional_context = ctx;
+
+    const headers = { 'Content-Type': 'application/json' };
+    const apiKey = el('api-key').value.trim();
+    if (apiKey) headers['X-API-Key'] = apiKey;
+
+    try {
+      el('status-text').textContent = 'Analysing… this may take 30–90 seconds';
+      const res = await fetch('/api/rfp/analyze', { method: 'POST', headers, body: JSON.stringify(body) });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(`Server error ${res.status}: ${data.detail || JSON.stringify(data)}`);
+        return;
+      }
+      if (!data.success) {
+        showError(data.error_message || 'Analysis failed — unknown error.');
+        return;
+      }
+
+      renderResults(data.analysis);
+    } catch (err) {
+      showError(`Network error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderResults(a) {
+    // Score circle
+    const sc = Math.round(a.overall_score);
+    const col = scoreColor(sc);
+    el('score-num').textContent = sc;
+    const circle = el('score-circle');
+    circle.style.borderColor = `var(--${col})`;
+    el('score-num').className = `score-num c-${col}`;
+
+    // Win probability
+    const wpCol = winProbColor(a.win_probability);
+    const badge = el('win-prob-badge');
+    badge.className = `win-prob bg-${wpCol}`;
+    el('win-dot').style.background = `var(--${wpCol})`;
+    el('win-prob-text').textContent = `Win Probability: ${a.win_probability}`;
+
+    // Summary
+    el('exec-summary').textContent = a.executive_summary;
+    el('competitive-position').textContent = a.competitive_position;
+
+    // High/low areas
+    populateList('high-areas', a.high_scoring_areas);
+    populateList('low-areas', a.areas_needing_attention);
+
+    // Section scores
+    const sl = el('section-list');
+    sl.innerHTML = '';
+    (a.section_scores || []).forEach(sec => {
+      const score = Math.round(sec.score);
+      const c = scoreColor(score);
+      const div = document.createElement('div');
+      div.className = 'section-item';
+      div.innerHTML = `
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="section-name">${esc(sec.section)}</span>
+          <span class="section-score-badge bg-${c}">${score}</span>
+          <button class="chevron" tabindex="-1" aria-label="Toggle">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="section-bar-wrap">
+          <div class="section-bar" style="width:${score}%; background:var(--${c})"></div>
+        </div>
+        <div class="section-detail" style="display:none">
+          <p>${esc(sec.rationale)}</p>
+          ${sec.strengths?.length ? `<ul class="swlist strengths">${sec.strengths.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+          ${sec.weaknesses?.length ? `<ul class="swlist weaknesses" style="margin-top:0.35rem">${sec.weaknesses.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+        </div>`;
+      sl.appendChild(div);
+    });
+
+    // Action items
+    const al = el('action-list');
+    al.innerHTML = '';
+    (a.action_items || []).forEach(item => {
+      const pc = priorityColor(item.priority);
+      const div = document.createElement('div');
+      div.className = 'action-item';
+      div.innerHTML = `
+        <span class="priority-badge bg-${pc} border-${pc}">${esc(item.priority)}</span>
+        <div class="action-body">
+          <div class="action-area">${esc(item.area)}</div>
+          <div class="action-text">${esc(item.action)}</div>
+          <div class="action-impact">${esc(item.expected_impact)}</div>
+        </div>`;
+      al.appendChild(div);
+    });
+
+    // Simple lists
+    populateList('strategic-list', a.strategic_recommendations);
+    populateList('risk-list', a.risk_factors);
+    populateList('compliance-list', a.compliance_gaps);
+
+    el('results').style.display = 'block';
+    el('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function toggleSection(header) {
+    const detail = header.parentElement.querySelector('.section-detail');
+    const chev = header.querySelector('.chevron');
+    const open = detail.style.display !== 'none';
+    detail.style.display = open ? 'none' : 'block';
+    if (open) chev.classList.remove('open'); else chev.classList.add('open');
+  }
+
+  function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function setLoading(on) {
+    el('analyze-btn').disabled = on;
+    el('spinner').style.display = on ? 'block' : 'none';
+    if (!on) el('status-text').textContent = '';
+  }
+
+  function showError(msg) {
+    const e = el('error-msg');
+    e.textContent = msg;
+    e.style.display = 'block';
+  }
+  function hideError() { el('error-msg').style.display = 'none'; }
+
+  function clearAll() {
+    ['rfp-doc','resp-doc','criteria','context','api-key'].forEach(id => el(id).value = '');
+    hideError();
+    el('results').style.display = 'none';
+  }
+
+  function scrollToForm() {
+    el('form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

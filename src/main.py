@@ -23,7 +23,9 @@ import anthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 
 from src.agent import MODEL, analyze_rfp
 from src.models import AnalyzeRFPRequest, AnalyzeRFPResponse, HealthResponse
@@ -83,6 +85,8 @@ app = FastAPI(
     license_info={"name": "MIT"},
 )
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # CORS — allow Copilot Studio and other callers
 _cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
 app.add_middleware(
@@ -95,6 +99,11 @@ app.add_middleware(
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/static/index.html")
+
 
 @app.get(
     "/health",
