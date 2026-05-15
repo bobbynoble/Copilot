@@ -25,8 +25,17 @@ from fastapi import FastAPI, HTTPException, Request, Security, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 
+import hl7 as hl7lib
+
 from src.agent import MODEL, analyze_rfp
-from src.models import AnalyzeRFPRequest, AnalyzeRFPResponse, HealthResponse
+from src.fhir_mapper import convert as fhir_convert
+from src.models import (
+    AnalyzeRFPRequest,
+    AnalyzeRFPResponse,
+    FHIRConvertRequest,
+    FHIRConvertResponse,
+    HealthResponse,
+)
 
 load_dotenv()
 
@@ -152,3 +161,41 @@ async def analyze_rfp_endpoint(body: AnalyzeRFPRequest) -> AnalyzeRFPResponse:
     except Exception as exc:  # noqa: BLE001
         logger.exception("Unexpected error during RFP analysis")
         return AnalyzeRFPResponse(success=False, error_message=str(exc))
+
+
+@app.post(
+    "/api/fhir/convert",
+    response_model=FHIRConvertResponse,
+    summary="Convert HL7 v2 message to FHIR R4 Bundle",
+    description=(
+        "Submit a raw HL7 v2 message and receive a FHIR R4 Bundle. "
+        "Supported segments: MSH → MessageHeader, PID → Patient, "
+        "PV1 → Encounter, OBX → Observation, OBR → DiagnosticReport, NTE → Basic. "
+        "Non-standard Z-segments are preserved as Basic resources with a raw-segment "
+        "extension rather than being silently dropped — their names are reported in "
+        "the z_segments_found field."
+    ),
+    tags=["FHIR"],
+    dependencies=[Security(_verify_api_key)],
+    responses={
+        200: {"description": "Conversion completed (check success field)"},
+        401: {"description": "Invalid or missing X-API-Key (only when RFP_API_KEY is configured)"},
+        422: {"description": "Validation error — check your request body"},
+    },
+)
+async def fhir_convert_endpoint(body: FHIRConvertRequest) -> FHIRConvertResponse:
+    try:
+        bundle, z_segs = fhir_convert(body.hl7_message)
+        if z_segs:
+            logger.info("Z-segments preserved in FHIR output: %s", ", ".join(z_segs))
+        return FHIRConvertResponse(
+            success=True,
+            bundle=bundle,
+            z_segments_found=z_segs or None,
+        )
+    except hl7lib.ParseException as exc:
+        logger.warning("HL7 v2 parse error: %s", exc)
+        return FHIRConvertResponse(success=False, error_message=f"HL7 parse error: {exc}")
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Unexpected error during FHIR conversion")
+        return FHIRConvertResponse(success=False, error_message=str(exc))

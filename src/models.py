@@ -137,3 +137,50 @@ class AnalyzeRFPResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str = Field(..., examples=["ok"])
     model: str = Field(..., examples=["claude-opus-4-6"])
+
+
+# ── FHIR conversion models ────────────────────────────────────────────────────
+
+class FHIRConvertRequest(BaseModel):
+    """Input payload for the HL7 v2 → FHIR R4 conversion endpoint."""
+
+    hl7_message: str = Field(
+        ...,
+        description=(
+            "Raw HL7 v2 message string. Segment separators may be CR, LF, or CRLF — "
+            "they are normalised automatically. "
+            "Supported segment types: MSH, PID, PV1, OBX, OBR, NTE. "
+            "Z-segments (custom local segments) are preserved as FHIR Basic resources "
+            "rather than being silently dropped."
+        ),
+        min_length=10,
+        examples=[
+            "MSH|^~\\&|HIS|RIH|EKG|EKG|20230101120000||ADT^A01|MSG00001|P|2.4\r"
+            "PID|1||123456^^^MRN||Doe^John^A||19800101|M\r"
+            "PV1|1|I|2000^2012^01||||004777^LEBAUER^SIDNEY^J.|||SUR"
+        ],
+    )
+
+
+class FHIRConvertResponse(BaseModel):
+    """API response wrapper for the HL7 v2 → FHIR R4 conversion endpoint."""
+
+    success: bool = Field(..., description="True when conversion completed without error")
+    bundle: Optional[Dict[str, object]] = Field(
+        None,
+        description=(
+            "FHIR R4 Bundle (type=message) containing the converted resources. "
+            "Present when success=true."
+        ),
+    )
+    z_segments_found: Optional[List[str]] = Field(
+        None,
+        description=(
+            "Names of any non-standard Z-segments encountered in the source message. "
+            "Each is preserved as a Basic resource in the bundle rather than dropped."
+        ),
+    )
+    error_message: Optional[str] = Field(
+        None,
+        description="Human-readable error detail (present when success=false)",
+    )
