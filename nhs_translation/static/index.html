@@ -42,7 +42,6 @@
       gap: 16px;
       min-height: 64px;
     }
-
     .nhs-logo {
       background: var(--nhs-white);
       color: var(--nhs-blue);
@@ -53,17 +52,8 @@
       border-radius: var(--radius);
       flex-shrink: 0;
     }
-
-    header h1 {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    header p {
-      font-size: 13px;
-      opacity: 0.85;
-      margin-left: auto;
-    }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header p  { font-size: 13px; opacity: 0.85; margin-left: auto; }
 
     /* ── Main ── */
     main {
@@ -75,14 +65,9 @@
     }
 
     /* ── Tabs ── */
-    .tabs {
-      display: flex;
-      gap: 2px;
-      margin-bottom: 0;
-    }
-
+    .tabs { display: flex; gap: 2px; }
     .tab-btn {
-      padding: 12px 24px;
+      padding: 12px 22px;
       border: none;
       background: var(--nhs-mid-grey);
       color: var(--nhs-white);
@@ -92,14 +77,8 @@
       border-radius: var(--radius) var(--radius) 0 0;
       transition: background 0.15s;
     }
-
-    .tab-btn.active {
-      background: var(--nhs-blue);
-    }
-
-    .tab-btn:hover:not(.active) {
-      background: var(--nhs-warm-grey);
-    }
+    .tab-btn.active              { background: var(--nhs-blue); }
+    .tab-btn:hover:not(.active)  { background: var(--nhs-warm-grey); }
 
     /* ── Card ── */
     .card {
@@ -108,9 +87,8 @@
       box-shadow: var(--shadow);
       padding: 28px;
     }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel         { display: none; }
+    .tab-panel.active  { display: block; }
 
     /* ── Form Elements ── */
     label {
@@ -120,9 +98,7 @@
       margin-top: 18px;
       font-size: 15px;
     }
-
     label:first-child { margin-top: 0; }
-
     textarea, input[type="url"], select {
       width: 100%;
       padding: 10px 12px;
@@ -133,19 +109,12 @@
       transition: border-color 0.15s;
       background: var(--nhs-white);
     }
-
     textarea:focus, input[type="url"]:focus, select:focus {
       outline: none;
       border-color: var(--nhs-blue);
     }
-
     textarea { resize: vertical; min-height: 120px; }
-
-    .lang-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
+    .lang-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
     /* ── Buttons ── */
     .btn {
@@ -161,15 +130,9 @@
       transition: opacity 0.15s, transform 0.1s;
       margin-top: 20px;
     }
-
-    .btn:active { transform: scale(0.98); }
+    .btn:active   { transform: scale(0.98); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .btn-primary {
-      background: var(--nhs-green);
-      color: var(--nhs-white);
-    }
-
+    .btn-primary  { background: var(--nhs-green); color: var(--nhs-white); }
     .btn-primary:hover:not(:disabled) { opacity: 0.9; }
 
     /* ── Results ── */
@@ -181,9 +144,7 @@
       border-left: 4px solid var(--nhs-blue);
       display: none;
     }
-
     .result-box.visible { display: block; }
-
     .result-label {
       font-size: 12px;
       font-weight: 700;
@@ -192,7 +153,6 @@
       color: var(--nhs-warm-grey);
       margin-bottom: 6px;
     }
-
     .detected-badge {
       display: inline-block;
       background: var(--nhs-light-blue);
@@ -203,14 +163,12 @@
       border-radius: 20px;
       margin-bottom: 14px;
     }
-
     .translated-text {
       font-size: 16px;
       line-height: 1.6;
       white-space: pre-wrap;
       margin-bottom: 16px;
     }
-
     .copy-btn {
       background: none;
       border: 2px solid var(--nhs-blue);
@@ -222,13 +180,8 @@
       cursor: pointer;
       margin-bottom: 16px;
     }
-
     .copy-btn:hover { background: var(--nhs-blue); color: var(--nhs-white); }
-
-    audio {
-      width: 100%;
-      margin-top: 8px;
-    }
+    audio { width: 100%; margin-top: 8px; }
 
     /* ── Status Indicator ── */
     .status-bar {
@@ -241,23 +194,18 @@
       font-weight: 700;
       margin-top: 16px;
     }
-
     .status-bar.pending { background: #fff3cd; color: #856404; }
     .status-bar.success { background: #d4edda; color: #155724; }
     .status-bar.error   { background: #f8d7da; color: #721c24; }
-
     .spinner {
-      width: 18px;
-      height: 18px;
+      width: 18px; height: 18px;
       border: 3px solid rgba(0,0,0,0.15);
       border-top-color: currentColor;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       flex-shrink: 0;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .audio-download {
       display: inline-block;
       margin-top: 10px;
@@ -267,15 +215,98 @@
     }
 
     /* ── Error ── */
-    .error-msg {
-      color: var(--nhs-red);
+    .error-msg { color: var(--nhs-red); font-size: 14px; font-weight: 700; margin-top: 12px; display: none; }
+    .error-msg.visible { display: block; }
+
+    /* ── Speak & Translate ── */
+    .speak-lang-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: end;
+      gap: 12px;
+      margin-top: 0;
+    }
+    .speak-arrow {
+      font-size: 22px;
+      color: var(--nhs-mid-grey);
+      padding-bottom: 10px;
+      text-align: center;
+    }
+    .mic-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 28px 0 20px;
+      gap: 14px;
+    }
+    .mic-btn {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      border: none;
+      background: var(--nhs-green);
+      color: var(--nhs-white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      box-shadow: 0 4px 14px rgba(0,150,57,0.35);
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      position: relative;
+    }
+    .mic-btn:hover  { opacity: 0.92; transform: scale(1.04); }
+    .mic-btn:active { transform: scale(0.97); }
+    .mic-btn.listening {
+      background: var(--nhs-red);
+      box-shadow: 0 4px 14px rgba(218,41,28,0.4);
+      animation: mic-pulse 1.2s ease-in-out infinite;
+    }
+    .mic-btn.translating {
+      background: var(--nhs-blue);
+      box-shadow: 0 4px 14px rgba(0,94,184,0.4);
+    }
+    .mic-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      animation: none;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(218,41,28,0.4); }
+      50%       { box-shadow: 0 4px 28px rgba(218,41,28,0.7), 0 0 0 12px rgba(218,41,28,0.12); }
+    }
+    .mic-hint {
       font-size: 14px;
+      color: var(--nhs-warm-grey);
       font-weight: 700;
-      margin-top: 12px;
+      min-height: 20px;
+    }
+    .transcript-box {
+      width: 100%;
+      min-height: 70px;
+      padding: 12px 14px;
+      border: 2px dashed var(--nhs-mid-grey);
+      border-radius: var(--radius);
+      font-size: 16px;
+      line-height: 1.5;
+      color: #212b32;
+      background: var(--nhs-pale-grey);
+      font-style: italic;
+    }
+    .transcript-box.has-text {
+      font-style: normal;
+      border-color: var(--nhs-blue);
+      border-style: solid;
+    }
+    .transcript-box.interim { color: var(--nhs-warm-grey); }
+    .speak-result-box {
+      margin-top: 20px;
+      padding: 20px;
+      background: var(--nhs-pale-grey);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--nhs-green);
       display: none;
     }
-
-    .error-msg.visible { display: block; }
+    .speak-result-box.visible { display: block; }
 
     /* ── Footer ── */
     footer {
@@ -288,8 +319,10 @@
 
     /* ── Responsive ── */
     @media (max-width: 600px) {
-      .lang-row { grid-template-columns: 1fr; }
-      header p { display: none; }
+      .lang-row         { grid-template-columns: 1fr; }
+      .speak-lang-row   { grid-template-columns: 1fr; }
+      .speak-arrow      { display: none; }
+      header p          { display: none; }
     }
   </style>
 </head>
@@ -303,24 +336,22 @@
 
 <main>
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('text')">Text Translation</button>
-    <button class="tab-btn" onclick="switchTab('audio')">Audio Dubbing</button>
+    <button class="tab-btn active"  onclick="switchTab('text',  this)">Text Translation</button>
+    <button class="tab-btn"         onclick="switchTab('speak', this)">&#127908; Speak &amp; Translate</button>
+    <button class="tab-btn"         onclick="switchTab('audio', this)">Audio Dubbing</button>
   </div>
 
   <div class="card">
 
     <!-- ── Text Translation Panel ── -->
     <div id="panel-text" class="tab-panel active">
-
       <label for="input-text">Text to translate</label>
       <textarea id="input-text" placeholder="Enter the text you want to translate…" rows="6"></textarea>
 
       <div class="lang-row">
         <div>
           <label for="text-source-lang">Source language</label>
-          <select id="text-source-lang">
-            <option value="">Auto-detect</option>
-          </select>
+          <select id="text-source-lang"><option value="">Auto-detect</option></select>
         </div>
         <div>
           <label for="text-target-lang">Target language</label>
@@ -328,20 +359,15 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" id="translate-btn" onclick="translateText()">
-        Translate
-      </button>
-
+      <button class="btn btn-primary" id="translate-btn" onclick="translateText()">Translate</button>
       <div class="error-msg" id="text-error"></div>
 
       <div class="result-box" id="text-result">
         <div class="result-label">Detected language</div>
         <span class="detected-badge" id="detected-lang-badge">—</span>
-
         <div class="result-label">Translation</div>
         <div class="translated-text" id="translated-text"></div>
-        <button class="copy-btn" onclick="copyTranslation()">Copy</button>
-
+        <button class="copy-btn" onclick="copyText('translated-text', this)">Copy</button>
         <div id="tts-section">
           <div class="result-label">Spoken audio</div>
           <audio id="tts-audio" controls></audio>
@@ -349,15 +375,52 @@
       </div>
     </div>
 
+    <!-- ── Speak & Translate Panel ── -->
+    <div id="panel-speak" class="tab-panel">
+
+      <div class="speak-lang-row">
+        <div>
+          <label for="speak-source-lang">I am speaking</label>
+          <select id="speak-source-lang"></select>
+        </div>
+        <div class="speak-arrow">&#8594;</div>
+        <div>
+          <label for="speak-target-lang">Translate into</label>
+          <select id="speak-target-lang"></select>
+        </div>
+      </div>
+
+      <div class="mic-area">
+        <button class="mic-btn" id="mic-btn" onclick="toggleListening()" title="Tap to speak">
+          &#127908;
+        </button>
+        <div class="mic-hint" id="mic-hint">Tap the microphone to start speaking</div>
+      </div>
+
+      <div class="result-label" style="margin-bottom:6px;">What I heard</div>
+      <div class="transcript-box" id="transcript-box">Your speech will appear here…</div>
+
+      <div class="error-msg" id="speak-error"></div>
+
+      <div class="speak-result-box" id="speak-result">
+        <div class="result-label">Translation</div>
+        <div class="translated-text" id="speak-translated-text"></div>
+        <button class="copy-btn" onclick="copyText('speak-translated-text', this)">Copy</button>
+        <div id="speak-tts-section">
+          <div class="result-label">Spoken reply</div>
+          <audio id="speak-tts-audio" controls></audio>
+        </div>
+        <div id="speak-translating" class="status-bar pending" style="display:none;">
+          <span class="spinner"></span>
+          <span>Translating…</span>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Audio Dubbing Panel ── -->
     <div id="panel-audio" class="tab-panel">
-
       <label for="audio-url">Audio file URL</label>
-      <input
-        type="url"
-        id="audio-url"
-        placeholder="https://example.com/patient-recording.mp3"
-      />
+      <input type="url" id="audio-url" placeholder="https://example.com/patient-recording.mp3" />
 
       <div class="lang-row">
         <div>
@@ -370,10 +433,7 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" id="dub-btn" onclick="startDubbing()">
-        Start Dubbing
-      </button>
-
+      <button class="btn btn-primary" id="dub-btn" onclick="startDubbing()">Start Dubbing</button>
       <div class="error-msg" id="audio-error"></div>
 
       <div class="result-box" id="audio-result">
@@ -397,9 +457,17 @@
 </footer>
 
 <script>
-  // ── State ──────────────────────────────────────────────────────────────────
+  // ── Language data ──────────────────────────────────────────────────────────
   let languages = [];
-  let pollTimer = null;
+
+  // Maps our LANG_CONFIG codes → BCP-47 codes understood by Web Speech API
+  const SPEECH_LANG_MAP = {
+    EN_GB: 'en-GB', AR_SA: 'ar-SA', BN_BD: 'bn-BD', ZH_CN: 'zh-CN',
+    CY_GB: 'cy-GB', FR_FR: 'fr-FR', GU_IN: 'gu-IN', HI_IN: 'hi-IN',
+    PL_PL: 'pl-PL', PT_BR: 'pt-BR', PA_IN: 'pa-IN', RO_RO: 'ro-RO',
+    SO_SO: 'so',    ES_ES: 'es-ES', TA_IN: 'ta-IN', TR_TR: 'tr-TR',
+    UR_PK: 'ur-PK',
+  };
 
   // ── Init ───────────────────────────────────────────────────────────────────
   async function init() {
@@ -414,32 +482,28 @@
 
   function populateSelects() {
     const opts = languages.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+    const arDefault = l => { const o = [...l.options].find(o => o.value === 'AR_SA'); if (o) o.selected = true; };
 
-    // Source: text tab — has auto-detect option prepended
-    document.getElementById('text-source-lang').innerHTML =
-      '<option value="">Auto-detect</option>' + opts;
+    document.getElementById('text-source-lang').innerHTML = '<option value="">Auto-detect</option>' + opts;
+    document.getElementById('text-target-lang').innerHTML = opts;
+    arDefault(document.getElementById('text-target-lang'));
 
-    // Target: text tab — default to first non-English, or first
-    const textTarget = document.getElementById('text-target-lang');
-    textTarget.innerHTML = opts;
-    // Pre-select Arabic as a useful NHS default
-    const arOpt = [...textTarget.options].find(o => o.value === 'AR_SA');
-    if (arOpt) arOpt.selected = true;
+    document.getElementById('speak-source-lang').innerHTML = opts;
+    document.getElementById('speak-target-lang').innerHTML = opts;
+    arDefault(document.getElementById('speak-target-lang'));
 
-    // Audio tab
     document.getElementById('audio-source-lang').innerHTML = opts;
     document.getElementById('audio-target-lang').innerHTML = opts;
-    const audioTarget = document.getElementById('audio-target-lang');
-    const arAudio = [...audioTarget.options].find(o => o.value === 'AR_SA');
-    if (arAudio) arAudio.selected = true;
+    arDefault(document.getElementById('audio-target-lang'));
   }
 
   // ── Tabs ───────────────────────────────────────────────────────────────────
-  function switchTab(tab) {
+  function switchTab(tab, btn) {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('panel-' + tab).classList.add('active');
-    event.currentTarget.classList.add('active');
+    btn.classList.add('active');
+    if (tab !== 'speak') stopListening();
   }
 
   // ── Text Translation ───────────────────────────────────────────────────────
@@ -447,171 +511,277 @@
     const text = document.getElementById('input-text').value.trim();
     const sourceLang = document.getElementById('text-source-lang').value || null;
     const targetLang = document.getElementById('text-target-lang').value;
-    const errEl = document.getElementById('text-error');
 
-    errEl.className = 'error-msg';
-    errEl.textContent = '';
-
-    if (!text) { showError('text-error', 'Please enter some text to translate.'); return; }
+    document.getElementById('text-error').className = 'error-msg';
+    if (!text)       { showError('text-error', 'Please enter some text to translate.'); return; }
     if (!targetLang) { showError('text-error', 'Please select a target language.'); return; }
 
     const btn = document.getElementById('translate-btn');
-    btn.disabled = true;
-    btn.textContent = 'Translating…';
+    btn.disabled = true; btn.textContent = 'Translating…';
     document.getElementById('text-result').classList.remove('visible');
 
     try {
-      const res = await fetch('/api/translate/text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, source_language: sourceLang, target_language: targetLang }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        showError('text-error', data.error_message || 'Translation failed. Please try again.');
-        return;
-      }
-
+      const data = await postJSON('/api/translate/text', { text, source_language: sourceLang, target_language: targetLang });
+      if (!data.success) { showError('text-error', data.error_message || 'Translation failed.'); return; }
       document.getElementById('detected-lang-badge').textContent = data.detected_language || '—';
       document.getElementById('translated-text').textContent = data.translated_text || '';
-
       const ttsSection = document.getElementById('tts-section');
       if (data.audio_base64) {
-        const audioEl = document.getElementById('tts-audio');
-        audioEl.src = 'data:audio/mpeg;base64,' + data.audio_base64;
+        document.getElementById('tts-audio').src = 'data:audio/mpeg;base64,' + data.audio_base64;
         ttsSection.style.display = 'block';
-      } else {
-        ttsSection.style.display = 'none';
-      }
-
+      } else { ttsSection.style.display = 'none'; }
       document.getElementById('text-result').classList.add('visible');
-
     } catch (e) {
       showError('text-error', 'Network error — is the server running?');
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Translate';
+      btn.disabled = false; btn.textContent = 'Translate';
     }
   }
 
-  function copyTranslation() {
-    const text = document.getElementById('translated-text').textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = event.currentTarget;
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 1500);
-    });
+  // ── Speak & Translate ──────────────────────────────────────────────────────
+  let recognition = null;
+  let isListening  = false;
+  let finalTranscript = '';
+
+  function buildRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+    const r = new SR();
+    r.continuous      = false;
+    r.interimResults  = true;
+    r.maxAlternatives = 1;
+    return r;
+  }
+
+  function toggleListening() {
+    if (isListening) { stopListening(); }
+    else             { startListening(); }
+  }
+
+  function startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      showError('speak-error', 'Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    const sourceLang = document.getElementById('speak-source-lang').value;
+    const speechCode = SPEECH_LANG_MAP[sourceLang];
+
+    document.getElementById('speak-error').className = 'error-msg';
+    finalTranscript = '';
+
+    recognition = buildRecognition();
+    recognition.lang = speechCode || 'en-GB';
+
+    recognition.onstart = () => {
+      isListening = true;
+      setMicState('listening');
+      setTranscript('Listening…', true);
+    };
+
+    recognition.onresult = (e) => {
+      let interim = '';
+      finalTranscript = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) { finalTranscript += t; }
+        else                       { interim += t; }
+      }
+      setTranscript(finalTranscript || interim, !finalTranscript);
+    };
+
+    recognition.onerror = (e) => {
+      isListening = false;
+      setMicState('idle');
+      if (e.error === 'not-allowed') {
+        showError('speak-error', 'Microphone access denied. Please allow microphone permission and try again.');
+      } else if (e.error === 'language-not-supported') {
+        showError('speak-error', 'Speech recognition is not available for this language. Try switching to a supported language or use the Text Translation tab.');
+      } else if (e.error !== 'no-speech') {
+        showError('speak-error', `Speech error: ${e.error}`);
+      }
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      setMicState('idle');
+      if (finalTranscript.trim()) {
+        runSpeakTranslation(finalTranscript.trim());
+      } else {
+        setMicHint('Tap the microphone to start speaking');
+      }
+    };
+
+    try {
+      recognition.start();
+    } catch (e) {
+      isListening = false;
+      setMicState('idle');
+      showError('speak-error', 'Could not start microphone: ' + e.message);
+    }
+  }
+
+  function stopListening() {
+    if (recognition && isListening) {
+      recognition.stop();
+    }
+    isListening = false;
+    setMicState('idle');
+  }
+
+  async function runSpeakTranslation(text) {
+    const targetLang = document.getElementById('speak-target-lang').value;
+    const sourceLang = document.getElementById('speak-source-lang').value;
+    if (!targetLang) { showError('speak-error', 'Please select a target language.'); return; }
+
+    setMicState('translating');
+    setMicHint('Translating…');
+    document.getElementById('speak-result').classList.add('visible');
+    document.getElementById('speak-translating').style.display = 'flex';
+    document.getElementById('speak-tts-section').style.display = 'none';
+    document.getElementById('speak-translated-text').textContent = '';
+
+    try {
+      const data = await postJSON('/api/translate/text', {
+        text,
+        source_language: sourceLang || null,
+        target_language: targetLang,
+      });
+
+      document.getElementById('speak-translating').style.display = 'none';
+
+      if (!data.success) {
+        showError('speak-error', data.error_message || 'Translation failed.');
+        setMicState('idle');
+        setMicHint('Tap the microphone to start speaking');
+        return;
+      }
+
+      document.getElementById('speak-translated-text').textContent = data.translated_text || '';
+
+      if (data.audio_base64) {
+        const audio = document.getElementById('speak-tts-audio');
+        audio.src = 'data:audio/mpeg;base64,' + data.audio_base64;
+        document.getElementById('speak-tts-section').style.display = 'block';
+        audio.play().catch(() => {});
+      }
+
+    } catch (e) {
+      document.getElementById('speak-translating').style.display = 'none';
+      showError('speak-error', 'Network error — is the server running?');
+    } finally {
+      setMicState('idle');
+      setMicHint('Tap the microphone to speak again');
+    }
+  }
+
+  function setMicState(state) {
+    const btn = document.getElementById('mic-btn');
+    btn.className = 'mic-btn' + (state !== 'idle' ? ' ' + state : '');
+    btn.disabled  = state === 'translating';
+    const icons = { idle: '🎤', listening: '⏹', translating: '⏳' };
+    btn.textContent = icons[state] || '🎤';
+  }
+
+  function setMicHint(text) {
+    document.getElementById('mic-hint').textContent = text;
+  }
+
+  function setTranscript(text, isInterim = false) {
+    const box = document.getElementById('transcript-box');
+    box.textContent = text;
+    box.className = 'transcript-box' + (text && text !== 'Listening…' ? ' has-text' : '') + (isInterim ? ' interim' : '');
   }
 
   // ── Audio Dubbing ──────────────────────────────────────────────────────────
+  let pollTimer = null;
+
   async function startDubbing() {
-    const audioUrl = document.getElementById('audio-url').value.trim();
+    const audioUrl  = document.getElementById('audio-url').value.trim();
     const sourceLang = document.getElementById('audio-source-lang').value;
     const targetLang = document.getElementById('audio-target-lang').value;
 
     document.getElementById('audio-error').className = 'error-msg';
-
-    if (!audioUrl) { showError('audio-error', 'Please enter the URL of the audio file.'); return; }
-    if (!sourceLang) { showError('audio-error', 'Please select the source language.'); return; }
-    if (!targetLang) { showError('audio-error', 'Please select the target language.'); return; }
+    if (!audioUrl)               { showError('audio-error', 'Please enter the URL of the audio file.'); return; }
+    if (!sourceLang)             { showError('audio-error', 'Please select the source language.'); return; }
+    if (!targetLang)             { showError('audio-error', 'Please select the target language.'); return; }
     if (sourceLang === targetLang) { showError('audio-error', 'Source and target languages must be different.'); return; }
 
     const btn = document.getElementById('dub-btn');
-    btn.disabled = true;
-    btn.textContent = 'Starting…';
-
+    btn.disabled = true; btn.textContent = 'Starting…';
     clearInterval(pollTimer);
     document.getElementById('audio-result').classList.add('visible');
     setDubStatus('pending', 'Submitting dubbing job…');
     document.getElementById('dub-audio-section').style.display = 'none';
 
     try {
-      const res = await fetch('/api/translate/audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          audio_url: audioUrl,
-          source_language: sourceLang,
-          target_language: targetLang,
-        }),
+      const data = await postJSON('/api/translate/audio', {
+        audio_url: audioUrl, source_language: sourceLang, target_language: targetLang,
       });
-
-      const data = await res.json();
-
       if (!data.success || !data.task_id) {
         setDubStatus('error', data.error_message || 'Failed to start dubbing job.');
-        btn.disabled = false;
-        btn.textContent = 'Start Dubbing';
         return;
       }
-
       setDubStatus('pending', 'Processing audio — this may take a minute…');
-      btn.textContent = 'Start Dubbing';
-      btn.disabled = false;
       pollDubStatus(data.task_id);
-
     } catch (e) {
       setDubStatus('error', 'Network error — is the server running?');
-      btn.disabled = false;
-      btn.textContent = 'Start Dubbing';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Start Dubbing';
     }
   }
 
   function pollDubStatus(taskId) {
     let attempts = 0;
-    const maxAttempts = 120; // 10 min at 5s intervals
-
     pollTimer = setInterval(async () => {
-      attempts++;
-      if (attempts > maxAttempts) {
-        clearInterval(pollTimer);
-        setDubStatus('error', 'Dubbing timed out. Please try again.');
-        return;
-      }
-
+      if (++attempts > 120) { clearInterval(pollTimer); setDubStatus('error', 'Dubbing timed out.'); return; }
       try {
         const res = await fetch(`/api/translate/audio/${encodeURIComponent(taskId)}`);
         const data = await res.json();
-
         if (data.status === 'SUCCESS' && data.audio_url) {
           clearInterval(pollTimer);
           setDubStatus('success', 'Dubbing complete!');
           document.getElementById('dub-spinner').style.display = 'none';
-
-          const audioEl = document.getElementById('dub-audio');
-          audioEl.src = data.audio_url;
-          const dlLink = document.getElementById('dub-download');
-          dlLink.href = data.audio_url;
+          document.getElementById('dub-audio').src = data.audio_url;
+          document.getElementById('dub-download').href = data.audio_url;
           document.getElementById('dub-audio-section').style.display = 'block';
-
         } else if (data.status === 'ERROR') {
           clearInterval(pollTimer);
           setDubStatus('error', data.error_message || 'Dubbing failed.');
         }
-        // PENDING: keep polling
-
-      } catch (e) {
-        // transient network error — keep polling
-      }
+      } catch (_) {}
     }, 5000);
   }
 
   function setDubStatus(type, message) {
     const bar = document.getElementById('dub-status-bar');
-    const text = document.getElementById('dub-status-text');
-    const spinner = document.getElementById('dub-spinner');
     bar.className = 'status-bar ' + type;
-    text.textContent = message;
-    spinner.style.display = type === 'pending' ? 'block' : 'none';
+    document.getElementById('dub-status-text').textContent = message;
+    document.getElementById('dub-spinner').style.display = type === 'pending' ? 'block' : 'none';
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function showError(elId, msg) {
     const el = document.getElementById(elId);
-    el.textContent = msg;
-    el.className = 'error-msg visible';
+    el.textContent = msg; el.className = 'error-msg visible';
+  }
+
+  function copyText(sourceId, btn) {
+    const text = document.getElementById(sourceId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    });
+  }
+
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return res.json();
   }
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
