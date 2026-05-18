@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NHS Translation Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --nhs-blue:       #005EB8;
+      --nhs-dark-blue:  #003087;
+      --nhs-light-blue: #41B6E6;
+      --nhs-green:      #009639;
+      --nhs-warm-grey:  #768692;
+      --nhs-pale-grey:  #F0F4F5;
+      --nhs-mid-grey:   #AEB7BD;
+      --nhs-white:      #FFFFFF;
+      --nhs-red:        #DA291C;
+      --radius:         4px;
+      --shadow:         0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: var(--nhs-pale-grey);
+      color: #212b32;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--nhs-blue);
+      color: var(--nhs-white);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 64px;
+    }
+
+    .nhs-logo {
+      background: var(--nhs-white);
+      color: var(--nhs-blue);
+      font-weight: 900;
+      font-size: 22px;
+      letter-spacing: -1px;
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    header p {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-left: auto;
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 860px;
+      width: 100%;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 0;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      border: none;
+      background: var(--nhs-mid-grey);
+      color: var(--nhs-white);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: var(--radius) var(--radius) 0 0;
+      transition: background 0.15s;
+    }
+
+    .tab-btn.active {
+      background: var(--nhs-blue);
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: var(--nhs-warm-grey);
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--nhs-white);
+      border-radius: 0 var(--radius) var(--radius) var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Form Elements ── */
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+      margin-top: 18px;
+      font-size: 15px;
+    }
+
+    label:first-child { margin-top: 0; }
+
+    textarea, input[type="url"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid var(--nhs-mid-grey);
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.15s;
+      background: var(--nhs-white);
+    }
+
+    textarea:focus, input[type="url"]:focus, select:focus {
+      outline: none;
+      border-color: var(--nhs-blue);
+    }
+
+    textarea { resize: vertical; min-height: 120px; }
+
+    .lang-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-top: 20px;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--nhs-green);
+      color: var(--nhs-white);
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    /* ── Results ── */
+    .result-box {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--nhs-pale-grey);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--nhs-blue);
+      display: none;
+    }
+
+    .result-box.visible { display: block; }
+
+    .result-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--nhs-warm-grey);
+      margin-bottom: 6px;
+    }
+
+    .detected-badge {
+      display: inline-block;
+      background: var(--nhs-light-blue);
+      color: var(--nhs-dark-blue);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+
+    .translated-text {
+      font-size: 16px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      margin-bottom: 16px;
+    }
+
+    .copy-btn {
+      background: none;
+      border: 2px solid var(--nhs-blue);
+      color: var(--nhs-blue);
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+
+    .copy-btn:hover { background: var(--nhs-blue); color: var(--nhs-white); }
+
+    audio {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    /* ── Status Indicator ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 16px;
+    }
+
+    .status-bar.pending { background: #fff3cd; color: #856404; }
+    .status-bar.success { background: #d4edda; color: #155724; }
+    .status-bar.error   { background: #f8d7da; color: #721c24; }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(0,0,0,0.15);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .audio-download {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--nhs-blue);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* ── Error ── */
+    .error-msg {
+      color: var(--nhs-red);
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 13px;
+      color: var(--nhs-warm-grey);
+      border-top: 1px solid var(--nhs-mid-grey);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .lang-row { grid-template-columns: 1fr; }
+      header p { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="nhs-logo">NHS</span>
+  <h1>Translation Assistant</h1>
+  <p>Powered by camb.ai &amp; Claude</p>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('text')">Text Translation</button>
+    <button class="tab-btn" onclick="switchTab('audio')">Audio Dubbing</button>
+  </div>
+
+  <div class="card">
+
+    <!-- ── Text Translation Panel ── -->
+    <div id="panel-text" class="tab-panel active">
+
+      <label for="input-text">Text to translate</label>
+      <textarea id="input-text" placeholder="Enter the text you want to translate…" rows="6"></textarea>
+
+      <div class="lang-row">
+        <div>
+          <label for="text-source-lang">Source language</label>
+          <select id="text-source-lang">
+            <option value="">Auto-detect</option>
+          </select>
+        </div>
+        <div>
+          <label for="text-target-lang">Target language</label>
+          <select id="text-target-lang"></select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="translate-btn" onclick="translateText()">
+        Translate
+      </button>
+
+      <div class="error-msg" id="text-error"></div>
+
+      <div class="result-box" id="text-result">
+        <div class="result-label">Detected language</div>
+        <span class="detected-badge" id="detected-lang-badge">—</span>
+
+        <div class="result-label">Translation</div>
+        <div class="translated-text" id="translated-text"></div>
+        <button class="copy-btn" onclick="copyTranslation()">Copy</button>
+
+        <div id="tts-section">
+          <div class="result-label">Spoken audio</div>
+          <audio id="tts-audio" controls></audio>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Audio Dubbing Panel ── -->
+    <div id="panel-audio" class="tab-panel">
+
+      <label for="audio-url">Audio file URL</label>
+      <input
+        type="url"
+        id="audio-url"
+        placeholder="https://example.com/patient-recording.mp3"
+      />
+
+      <div class="lang-row">
+        <div>
+          <label for="audio-source-lang">Source language</label>
+          <select id="audio-source-lang"></select>
+        </div>
+        <div>
+          <label for="audio-target-lang">Target language</label>
+          <select id="audio-target-lang"></select>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="dub-btn" onclick="startDubbing()">
+        Start Dubbing
+      </button>
+
+      <div class="error-msg" id="audio-error"></div>
+
+      <div class="result-box" id="audio-result">
+        <div class="status-bar pending" id="dub-status-bar">
+          <span class="spinner" id="dub-spinner"></span>
+          <span id="dub-status-text">Processing…</span>
+        </div>
+        <div id="dub-audio-section" style="display:none;">
+          <div class="result-label" style="margin-top:16px;">Dubbed audio</div>
+          <audio id="dub-audio" controls></audio>
+          <a id="dub-download" class="audio-download" download>Download</a>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- .card -->
+</main>
+
+<footer>
+  For demonstration purposes only. Always involve a qualified interpreter for clinical conversations.
+</footer>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let languages = [];
+  let pollTimer = null;
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const res = await fetch('/api/languages');
+      languages = await res.json();
+      populateSelects();
+    } catch (e) {
+      console.error('Failed to load languages', e);
+    }
+  }
+
+  function populateSelects() {
+    const opts = languages.map(l => `<option value="${l.code}">${l.name}</option>`).join('');
+
+    // Source: text tab — has auto-detect option prepended
+    document.getElementById('text-source-lang').innerHTML =
+      '<option value="">Auto-detect</option>' + opts;
+
+    // Target: text tab — default to first non-English, or first
+    const textTarget = document.getElementById('text-target-lang');
+    textTarget.innerHTML = opts;
+    // Pre-select Arabic as a useful NHS default
+    const arOpt = [...textTarget.options].find(o => o.value === 'AR_SA');
+    if (arOpt) arOpt.selected = true;
+
+    // Audio tab
+    document.getElementById('audio-source-lang').innerHTML = opts;
+    document.getElementById('audio-target-lang').innerHTML = opts;
+    const audioTarget = document.getElementById('audio-target-lang');
+    const arAudio = [...audioTarget.options].find(o => o.value === 'AR_SA');
+    if (arAudio) arAudio.selected = true;
+  }
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  // ── Text Translation ───────────────────────────────────────────────────────
+  async function translateText() {
+    const text = document.getElementById('input-text').value.trim();
+    const sourceLang = document.getElementById('text-source-lang').value || null;
+    const targetLang = document.getElementById('text-target-lang').value;
+    const errEl = document.getElementById('text-error');
+
+    errEl.className = 'error-msg';
+    errEl.textContent = '';
+
+    if (!text) { showError('text-error', 'Please enter some text to translate.'); return; }
+    if (!targetLang) { showError('text-error', 'Please select a target language.'); return; }
+
+    const btn = document.getElementById('translate-btn');
+    btn.disabled = true;
+    btn.textContent = 'Translating…';
+    document.getElementById('text-result').classList.remove('visible');
+
+    try {
+      const res = await fetch('/api/translate/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source_language: sourceLang, target_language: targetLang }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        showError('text-error', data.error_message || 'Translation failed. Please try again.');
+        return;
+      }
+
+      document.getElementById('detected-lang-badge').textContent = data.detected_language || '—';
+      document.getElementById('translated-text').textContent = data.translated_text || '';
+
+      const ttsSection = document.getElementById('tts-section');
+      if (data.audio_base64) {
+        const audioEl = document.getElementById('tts-audio');
+        audioEl.src = 'data:audio/mpeg;base64,' + data.audio_base64;
+        ttsSection.style.display = 'block';
+      } else {
+        ttsSection.style.display = 'none';
+      }
+
+      document.getElementById('text-result').classList.add('visible');
+
+    } catch (e) {
+      showError('text-error', 'Network error — is the server running?');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Translate';
+    }
+  }
+
+  function copyTranslation() {
+    const text = document.getElementById('translated-text').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = event.currentTarget;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
+    });
+  }
+
+  // ── Audio Dubbing ──────────────────────────────────────────────────────────
+  async function startDubbing() {
+    const audioUrl = document.getElementById('audio-url').value.trim();
+    const sourceLang = document.getElementById('audio-source-lang').value;
+    const targetLang = document.getElementById('audio-target-lang').value;
+
+    document.getElementById('audio-error').className = 'error-msg';
+
+    if (!audioUrl) { showError('audio-error', 'Please enter the URL of the audio file.'); return; }
+    if (!sourceLang) { showError('audio-error', 'Please select the source language.'); return; }
+    if (!targetLang) { showError('audio-error', 'Please select the target language.'); return; }
+    if (sourceLang === targetLang) { showError('audio-error', 'Source and target languages must be different.'); return; }
+
+    const btn = document.getElementById('dub-btn');
+    btn.disabled = true;
+    btn.textContent = 'Starting…';
+
+    clearInterval(pollTimer);
+    document.getElementById('audio-result').classList.add('visible');
+    setDubStatus('pending', 'Submitting dubbing job…');
+    document.getElementById('dub-audio-section').style.display = 'none';
+
+    try {
+      const res = await fetch('/api/translate/audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audio_url: audioUrl,
+          source_language: sourceLang,
+          target_language: targetLang,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success || !data.task_id) {
+        setDubStatus('error', data.error_message || 'Failed to start dubbing job.');
+        btn.disabled = false;
+        btn.textContent = 'Start Dubbing';
+        return;
+      }
+
+      setDubStatus('pending', 'Processing audio — this may take a minute…');
+      btn.textContent = 'Start Dubbing';
+      btn.disabled = false;
+      pollDubStatus(data.task_id);
+
+    } catch (e) {
+      setDubStatus('error', 'Network error — is the server running?');
+      btn.disabled = false;
+      btn.textContent = 'Start Dubbing';
+    }
+  }
+
+  function pollDubStatus(taskId) {
+    let attempts = 0;
+    const maxAttempts = 120; // 10 min at 5s intervals
+
+    pollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(pollTimer);
+        setDubStatus('error', 'Dubbing timed out. Please try again.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/translate/audio/${encodeURIComponent(taskId)}`);
+        const data = await res.json();
+
+        if (data.status === 'SUCCESS' && data.audio_url) {
+          clearInterval(pollTimer);
+          setDubStatus('success', 'Dubbing complete!');
+          document.getElementById('dub-spinner').style.display = 'none';
+
+          const audioEl = document.getElementById('dub-audio');
+          audioEl.src = data.audio_url;
+          const dlLink = document.getElementById('dub-download');
+          dlLink.href = data.audio_url;
+          document.getElementById('dub-audio-section').style.display = 'block';
+
+        } else if (data.status === 'ERROR') {
+          clearInterval(pollTimer);
+          setDubStatus('error', data.error_message || 'Dubbing failed.');
+        }
+        // PENDING: keep polling
+
+      } catch (e) {
+        // transient network error — keep polling
+      }
+    }, 5000);
+  }
+
+  function setDubStatus(type, message) {
+    const bar = document.getElementById('dub-status-bar');
+    const text = document.getElementById('dub-status-text');
+    const spinner = document.getElementById('dub-spinner');
+    bar.className = 'status-bar ' + type;
+    text.textContent = message;
+    spinner.style.display = type === 'pending' ? 'block' : 'none';
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function showError(elId, msg) {
+    const el = document.getElementById(elId);
+    el.textContent = msg;
+    el.className = 'error-msg visible';
+  }
+
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
