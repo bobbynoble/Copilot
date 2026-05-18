@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NHS Translation Assistant</title>
+  <title>NHS Translation Assistant — Patient Interpreter</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -317,12 +317,133 @@
       border-top: 1px solid var(--nhs-mid-grey);
     }
 
+    /* ── Patient Interpreter ── */
+    .interp-config {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--nhs-pale-grey);
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .interp-config label { margin: 0; font-size: 15px; white-space: nowrap; }
+    .interp-config select { width: auto; min-width: 200px; flex: 1; }
+
+    .interp-split {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 6px;
+      min-height: 480px;
+    }
+
+    .interp-panel {
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .interp-panel.nurse   { background: var(--nhs-blue);  color: var(--nhs-white); }
+    .interp-panel.patient { background: var(--nhs-green); color: var(--nhs-white); }
+
+    .interp-role {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.85;
+    }
+
+    .interp-speech-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .interp-original {
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 1.5;
+      opacity: 0.9;
+      min-height: 28px;
+      font-style: italic;
+    }
+    .interp-original.has-text { font-style: normal; }
+
+    .interp-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.3);
+      margin: 2px 0;
+    }
+
+    .interp-translated {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.4;
+      min-height: 32px;
+    }
+
+    .interp-mic-btn {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border: 3px solid rgba(255,255,255,0.6);
+      border-radius: 50px;
+      background: rgba(255,255,255,0.15);
+      color: var(--nhs-white);
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      margin-top: auto;
+    }
+    .interp-mic-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.9);
+    }
+    .interp-mic-btn:active  { transform: scale(0.97); }
+    .interp-mic-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .interp-mic-btn.listening {
+      background: rgba(255,255,255,0.3);
+      border-color: var(--nhs-white);
+      animation: interp-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes interp-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+      50%       { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+    }
+    .interp-mic-btn .mic-icon { font-size: 22px; }
+
+    .interp-status {
+      font-size: 13px;
+      opacity: 0.75;
+      font-weight: 700;
+      min-height: 18px;
+    }
+
+    .interp-unsupported {
+      background: rgba(255,255,255,0.15);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      display: none;
+    }
+    .interp-unsupported.visible { display: block; }
+
     /* ── Responsive ── */
     @media (max-width: 600px) {
       .lang-row         { grid-template-columns: 1fr; }
       .speak-lang-row   { grid-template-columns: 1fr; }
       .speak-arrow      { display: none; }
       header p          { display: none; }
+      .interp-translated { font-size: 18px; }
+      .interp-mic-btn    { padding: 12px 20px; font-size: 15px; }
     }
   </style>
 </head>
@@ -336,9 +457,10 @@
 
 <main>
   <div class="tabs">
-    <button class="tab-btn active"  onclick="switchTab('text',  this)">Text Translation</button>
-    <button class="tab-btn"         onclick="switchTab('speak', this)">&#127908; Speak &amp; Translate</button>
-    <button class="tab-btn"         onclick="switchTab('audio', this)">Audio Dubbing</button>
+    <button class="tab-btn active"  onclick="switchTab('text',        this)">Text Translation</button>
+    <button class="tab-btn"         onclick="switchTab('interpreter', this)">&#129686; Patient Interpreter</button>
+    <button class="tab-btn"         onclick="switchTab('speak',       this)">&#127908; Speak &amp; Translate</button>
+    <button class="tab-btn"         onclick="switchTab('audio',       this)">Audio Dubbing</button>
   </div>
 
   <div class="card">
@@ -373,6 +495,57 @@
           <audio id="tts-audio" controls></audio>
         </div>
       </div>
+    </div>
+
+    <!-- ── Patient Interpreter Panel ── -->
+    <div id="panel-interpreter" class="tab-panel">
+
+      <div class="interp-config">
+        <label for="interp-patient-lang">Patient speaks:</label>
+        <select id="interp-patient-lang"></select>
+      </div>
+
+      <div class="interp-split">
+
+        <!-- Nurse panel (top) -->
+        <div class="interp-panel nurse">
+          <div class="interp-role">🏥 Nurse — speaking English</div>
+          <div class="interp-speech-area">
+            <div class="interp-original" id="nurse-original">Tap the button and speak…</div>
+            <div class="interp-divider"></div>
+            <div class="interp-translated" id="nurse-translated">Translation will appear here</div>
+          </div>
+          <div class="interp-status" id="nurse-status"></div>
+          <button class="interp-mic-btn" id="nurse-mic-btn" onclick="interpSpeak('nurse')">
+            <span class="mic-icon">🎤</span> Nurse speaks
+          </button>
+          <div class="interp-unsupported" id="nurse-unsupported">
+            Speech recognition not supported in this browser — use Chrome or Edge.
+          </div>
+        </div>
+
+        <!-- Patient panel (bottom) -->
+        <div class="interp-panel patient">
+          <div class="interp-role">👤 Patient — speaking their language</div>
+          <div class="interp-speech-area">
+            <div class="interp-original" id="patient-original">Tap the button and speak…</div>
+            <div class="interp-divider"></div>
+            <div class="interp-translated" id="patient-translated">Translation will appear here</div>
+          </div>
+          <div class="interp-status" id="patient-status"></div>
+          <button class="interp-mic-btn" id="patient-mic-btn" onclick="interpSpeak('patient')">
+            <span class="mic-icon">🎤</span> Patient speaks
+          </button>
+          <div class="interp-unsupported" id="patient-unsupported">
+            Speech recognition not supported in this browser — use Chrome or Edge.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Hidden audio player — auto-plays translations aloud -->
+      <audio id="interp-audio" style="display:none;"></audio>
+
     </div>
 
     <!-- ── Speak & Translate Panel ── -->
@@ -488,6 +661,9 @@
     document.getElementById('text-target-lang').innerHTML = opts;
     arDefault(document.getElementById('text-target-lang'));
 
+    document.getElementById('interp-patient-lang').innerHTML = opts;
+    arDefault(document.getElementById('interp-patient-lang'));
+
     document.getElementById('speak-source-lang').innerHTML = opts;
     document.getElementById('speak-target-lang').innerHTML = opts;
     arDefault(document.getElementById('speak-target-lang'));
@@ -503,7 +679,8 @@
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('panel-' + tab).classList.add('active');
     btn.classList.add('active');
-    if (tab !== 'speak') stopListening();
+    if (tab !== 'speak')       stopListening();
+    if (tab !== 'interpreter') interpStop();
   }
 
   // ── Text Translation ───────────────────────────────────────────────────────
@@ -536,6 +713,144 @@
     } finally {
       btn.disabled = false; btn.textContent = 'Translate';
     }
+  }
+
+  // ── Patient Interpreter ────────────────────────────────────────────────────
+  let interpRec = null;
+  let interpActive = null;   // 'nurse' | 'patient' | null
+  let interpFinal = '';
+
+  function interpSpeak(side) {
+    // If already listening on this side, stop
+    if (interpActive === side) { interpStop(); return; }
+    // If listening on the other side, stop that first
+    if (interpActive) interpStop();
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      document.getElementById(side + '-unsupported').classList.add('visible');
+      return;
+    }
+
+    const patientLang  = document.getElementById('interp-patient-lang').value;
+    const speechCode   = side === 'nurse' ? 'en-GB' : (SPEECH_LANG_MAP[patientLang] || 'en-GB');
+
+    interpFinal = '';
+    interpRec   = new SR();
+    interpRec.lang            = speechCode;
+    interpRec.continuous      = false;
+    interpRec.interimResults  = true;
+    interpRec.maxAlternatives = 1;
+
+    interpRec.onstart = () => {
+      interpActive = side;
+      setInterpMic(side, 'listening');
+      setInterpStatus(side, 'Listening…');
+      // disable the other side's mic
+      const other = side === 'nurse' ? 'patient' : 'nurse';
+      document.getElementById(other + '-mic-btn').disabled = true;
+    };
+
+    interpRec.onresult = (e) => {
+      let interim = '';
+      interpFinal = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) interpFinal += t;
+        else interim += t;
+      }
+      const el = document.getElementById(side + '-original');
+      el.textContent = interpFinal || interim;
+      el.classList.toggle('has-text', !!(interpFinal || interim));
+    };
+
+    interpRec.onerror = (e) => {
+      interpActive = null;
+      setInterpMic(side, 'idle');
+      if (e.error === 'not-allowed') {
+        setInterpStatus(side, 'Microphone permission denied.');
+      } else if (e.error === 'language-not-supported') {
+        setInterpStatus(side, 'Language not supported for voice input.');
+        document.getElementById(side + '-unsupported').classList.add('visible');
+      } else if (e.error !== 'no-speech') {
+        setInterpStatus(side, 'Error: ' + e.error);
+      }
+      enableBothMics();
+    };
+
+    interpRec.onend = () => {
+      interpActive = null;
+      setInterpMic(side, 'idle');
+      enableBothMics();
+      if (interpFinal.trim()) {
+        runInterpTranslation(side, interpFinal.trim());
+      } else {
+        setInterpStatus(side, '');
+      }
+    };
+
+    interpRec.start();
+  }
+
+  function interpStop() {
+    if (interpRec) { try { interpRec.stop(); } catch(_) {} }
+    interpActive = null;
+    enableBothMics();
+  }
+
+  async function runInterpTranslation(side, text) {
+    const patientLang = document.getElementById('interp-patient-lang').value;
+    const sourceLang  = side === 'nurse' ? 'EN_GB' : patientLang;
+    const targetLang  = side === 'nurse' ? patientLang : 'EN_GB';
+
+    setInterpStatus(side, 'Translating…');
+    setInterpMic(side, 'busy');
+
+    try {
+      const data = await postJSON('/api/translate/text', {
+        text,
+        source_language: sourceLang,
+        target_language: targetLang,
+      });
+
+      if (!data.success) { setInterpStatus(side, 'Translation failed.'); return; }
+
+      const transEl = document.getElementById(side + '-translated');
+      transEl.textContent = data.translated_text || '';
+
+      if (data.audio_base64) {
+        setInterpStatus(side, 'Playing translation…');
+        const audio = document.getElementById('interp-audio');
+        audio.src = 'data:audio/mpeg;base64,' + data.audio_base64;
+        audio.play().catch(() => {});
+        audio.onended = () => setInterpStatus(side, 'Done — tap to speak again');
+      } else {
+        setInterpStatus(side, 'Done — tap to speak again');
+      }
+
+    } catch (e) {
+      setInterpStatus(side, 'Network error.');
+    } finally {
+      setInterpMic(side, 'idle');
+    }
+  }
+
+  function setInterpMic(side, state) {
+    const btn = document.getElementById(side + '-mic-btn');
+    const label = side === 'nurse' ? 'Nurse speaks' : 'Patient speaks';
+    const icons = { idle: '🎤', listening: '⏹', busy: '⏳' };
+    btn.className = 'interp-mic-btn' + (state === 'listening' ? ' listening' : '');
+    btn.disabled  = state === 'busy';
+    btn.innerHTML = `<span class="mic-icon">${icons[state] || '🎤'}</span> ${state === 'listening' ? 'Tap to stop' : label}`;
+  }
+
+  function setInterpStatus(side, msg) {
+    document.getElementById(side + '-status').textContent = msg;
+  }
+
+  function enableBothMics() {
+    document.getElementById('nurse-mic-btn').disabled   = false;
+    document.getElementById('patient-mic-btn').disabled = false;
   }
 
   // ── Speak & Translate ──────────────────────────────────────────────────────
