@@ -7,6 +7,7 @@ GET  /                              — Web UI (index.html)
 GET  /health                        — Liveness check
 GET  /api/languages                 — List supported languages
 GET  /api/voices                    — List available camb.ai voices
+GET  /api/network-url               — Local network URL for QR code generation
 POST /api/translate/text            — Translate text + optional TTS
 POST /api/translate/audio           — Start audio dubbing job
 GET  /api/translate/audio/{task_id} — Poll dubbing job status
@@ -16,10 +17,11 @@ from __future__ import annotations
 
 import logging
 import os
+import socket
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -85,6 +87,20 @@ async def index() -> FileResponse:
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health() -> HealthResponse:
     return HealthResponse(status="ok")
+
+
+@app.get("/api/network-url", tags=["System"], summary="Local network URL for QR code")
+async def network_url(request: Request) -> dict:
+    """Returns the URL other devices on the same network can use to reach this app."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        local_ip = "127.0.0.1"
+    port = request.url.port or 8001
+    return {"url": f"http://{local_ip}:{port}"}
 
 
 @app.get(

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NHS Translation Assistant — Patient Interpreter</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -54,6 +55,73 @@
     }
     header h1 { font-size: 20px; font-weight: 700; }
     header p  { font-size: 13px; opacity: 0.85; margin-left: auto; }
+    .qr-header-btn {
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: var(--nhs-white);
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .qr-header-btn:hover { background: rgba(255,255,255,0.25); }
+
+    /* ── QR Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--nhs-white);
+      border-radius: 8px;
+      padding: 32px;
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .modal h2 { font-size: 18px; color: var(--nhs-blue); margin-bottom: 6px; }
+    .modal p  { font-size: 14px; color: var(--nhs-warm-grey); margin-bottom: 20px; }
+    #qr-canvas { margin: 0 auto 16px; }
+    .qr-url {
+      font-size: 13px;
+      word-break: break-all;
+      color: var(--nhs-blue);
+      font-weight: 700;
+      background: var(--nhs-pale-grey);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+    .qr-warning {
+      font-size: 13px;
+      color: #856404;
+      background: #fff3cd;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      display: none;
+    }
+    .qr-warning.visible { display: block; }
+    .modal-close {
+      background: var(--nhs-blue);
+      color: var(--nhs-white);
+      border: none;
+      padding: 10px 28px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-close:hover { opacity: 0.9; }
 
     /* ── Main ── */
     main {
@@ -453,7 +521,24 @@
   <span class="nhs-logo">NHS</span>
   <h1>Translation Assistant</h1>
   <p>Powered by camb.ai &amp; Claude</p>
+  <button class="qr-header-btn" onclick="openQR()">📱 Patient QR</button>
 </header>
+
+<!-- QR Modal -->
+<div class="modal-backdrop" id="qr-modal" onclick="closeQROnBackdrop(event)">
+  <div class="modal">
+    <h2>📱 Share with Patient</h2>
+    <p>Patient scans this to open the app on their own phone</p>
+    <div id="qr-canvas"></div>
+    <div class="qr-url" id="qr-url-text"></div>
+    <div class="qr-warning" id="qr-warning">
+      ⚠️ You're running on <strong>localhost</strong> — patients on other devices won't be able to connect.<br><br>
+      Restart the server with:<br>
+      <code>python -m uvicorn nhs_translation.main:app --port 8001 --host 0.0.0.0</code>
+    </div>
+    <button class="modal-close" onclick="closeQR()">Close</button>
+  </div>
+</div>
 
 <main>
   <div class="tabs">
@@ -1097,6 +1182,46 @@
       body: JSON.stringify(body),
     });
     return res.json();
+  }
+
+  // ── QR Code ────────────────────────────────────────────────────────────────
+  let qrInstance = null;
+
+  async function openQR() {
+    const modal = document.getElementById('qr-modal');
+    modal.classList.add('open');
+
+    try {
+      const res  = await fetch('/api/network-url');
+      const data = await res.json();
+      const url  = data.url;
+
+      document.getElementById('qr-url-text').textContent = url;
+
+      const isLocalhost = url.includes('127.0.0.1') || url.includes('localhost');
+      document.getElementById('qr-warning').classList.toggle('visible', isLocalhost);
+
+      const canvas = document.getElementById('qr-canvas');
+      canvas.innerHTML = '';
+      qrInstance = new QRCode(canvas, {
+        text:         url,
+        width:        220,
+        height:       220,
+        colorDark:    '#003087',
+        colorLight:   '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    } catch (e) {
+      document.getElementById('qr-url-text').textContent = 'Could not determine network URL.';
+    }
+  }
+
+  function closeQR() {
+    document.getElementById('qr-modal').classList.remove('open');
+  }
+
+  function closeQROnBackdrop(e) {
+    if (e.target === document.getElementById('qr-modal')) closeQR();
   }
 
   // ── Bootstrap ──────────────────────────────────────────────────────────────
