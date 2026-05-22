@@ -38,6 +38,7 @@ from nhs_translation.agent import (
     generate_tts,
     get_dubbing_status,
     get_voices,
+    moderate_content,
     start_dubbing,
     translate_image_sign,
     translate_texts,
@@ -190,6 +191,22 @@ async def ws_endpoint(websocket: WebSocket, session_id: str, role: str) -> None:
 
             if not text:
                 continue
+
+            # Moderation check before translation
+            mod = await moderate_content(text)
+            if mod["action"] == "block":
+                await websocket.send_json({
+                    "type":    "blocked",
+                    "message": mod.get("reason", "This message could not be sent."),
+                })
+                continue
+            if mod["action"] == "flag":
+                logger.warning("Safeguarding flag: session=%s role=%s", session_id, role)
+                await session.send_nurse({
+                    "type":    "safeguarding_alert",
+                    "alert":   mod.get("alert", "Possible safeguarding concern detected."),
+                    "original": text,
+                })
 
             await websocket.send_json({"type": "processing"})
 

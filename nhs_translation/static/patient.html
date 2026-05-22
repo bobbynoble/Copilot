@@ -166,6 +166,25 @@
       opacity: 0.9;
     }
 
+    /* Blocked notice */
+    #blocked-notice {
+      display: none;
+      position: fixed; bottom: 160px; left: 50%; transform: translateX(-50%);
+      background: rgba(218,41,28,0.92);
+      color: var(--white);
+      padding: 12px 20px;
+      border-radius: 50px;
+      font-size: 14px; font-weight: 700;
+      text-align: center;
+      max-width: 80%;
+      z-index: 30;
+      animation: fadeout 4s forwards;
+    }
+    @keyframes fadeout {
+      0%,70% { opacity:1; }
+      100%    { opacity:0; }
+    }
+
     /* Scan sign button */
     .p-scan-btn {
       background: rgba(255,255,255,0.15);
@@ -332,6 +351,7 @@
   <button class="sign-close" onclick="closeSign()">✕ Close</button>
 </div>
 
+<div id="blocked-notice"></div>
 <audio id="p-audio" style="display:none;"></audio>
 <audio id="sign-audio" style="display:none;"></audio>
 
@@ -486,6 +506,9 @@
       setMicIdle();
     } else if (msg.type === 'processing') {
       setMicBusy('Translating…');
+    } else if (msg.type === 'blocked') {
+      setMicIdle();
+      showBlockedNotice(msg.message);
     } else if (msg.type === 'error') {
       setMicIdle();
     }
@@ -593,6 +616,16 @@
   function setMicLabel(msg) {
     document.getElementById('p-mic-label').textContent = msg;
   }
+  function showBlockedNotice(msg) {
+    const el = document.getElementById('blocked-notice');
+    el.textContent = msg;
+    el.style.display = 'block';
+    el.style.animation = 'none';
+    el.offsetHeight; // reflow
+    el.style.animation = 'fadeout 4s forwards';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
   function showError() {
     document.getElementById('connecting-overlay').style.display = 'none';
     document.getElementById('error-screen').classList.add('visible');

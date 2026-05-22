@@ -71,6 +71,52 @@ async def _default_voice_id() -> Optional[int]:
     return voices[0]["id"] if voices else None
 
 
+async def moderate_content(text: str) -> dict:
+    """Check message for abuse or safeguarding concerns before translation.
+
+    Returns dict with:
+      action: "allow" | "block" | "flag"
+      reason: shown to sender if blocked (user-friendly)
+      alert:  shown to nurse if flagged (safeguarding concern summary)
+    """
+    client = _get_anthropic()
+
+    msg = await client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=100,
+        messages=[{
+            "role": "user",
+            "content": (
+                "You are a content moderation assistant for an NHS hospital translation service.\n"
+                "Classify the following message and respond with JSON only.\n\n"
+                "Rules:\n"
+                "- BLOCK if the message contains threats, severe abuse, hate speech, or is clearly attempting to misuse the service\n"
+                "- FLAG if the message suggests the patient may be at risk: mentions of self-harm, suicidal thoughts, domestic abuse, child safeguarding concerns, or expressions of serious distress\n"
+                "- ALLOW everything else (including mild frustration, complaints, and normal clinical conversation)\n\n"
+                "Respond with JSON only, one of:\n"
+                "{\"action\":\"allow\"}\n"
+                "{\"action\":\"block\",\"reason\":\"<brief user-facing explanation>\"}\n"
+                "{\"action\":\"flag\",\"alert\":\"<brief safeguarding summary for nurse>\"}\n\n"
+                f"Message: {text[:1000]}"
+            ),
+        }],
+    )
+
+    import json
+    raw = msg.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].lstrip("json").strip()
+
+    try:
+        result = json.loads(raw)
+        action = result.get("action", "allow")
+        if action not in ("allow", "block", "flag"):
+            return {"action": "allow"}
+        return result
+    except (json.JSONDecodeError, AttributeError):
+        return {"action": "allow"}
+
+
 async def detect_language(text: str) -> str:
     """Use Claude to detect the language of text, returning a LANG_CONFIG key."""
     client = _get_anthropic()
