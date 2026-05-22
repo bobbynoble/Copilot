@@ -17,23 +17,23 @@ logger = logging.getLogger(__name__)
 # NHS-relevant languages supported by camb.ai
 # key = Languages enum name, value = (display_name, tts_language_code)
 LANG_CONFIG: dict[str, tuple[str, str]] = {
-    "EN_GB": ("English (UK)", "en-gb"),
+    "EN_GB": ("English (UK)", "en-us"),       # mars-flash uses en-us not en-gb
     "AR_SA": ("Arabic (العربية)", "ar-sa"),
     "BN_BD": ("Bengali (বাংলা)", "bn-bd"),
     "ZH_CN": ("Chinese Mandarin (普通话)", "zh-cn"),
-    "CY_GB": ("Welsh (Cymraeg)", "cy-gb"),
+    "CY_GB": ("Welsh (Cymraeg)", "en-us"),    # not supported by TTS, falls back to en-us
     "FR_FR": ("French (Français)", "fr-fr"),
-    "GU_IN": ("Gujarati (ગુજરાતી)", "gu-in"),
+    "GU_IN": ("Gujarati (ગુજરાતી)", "hi-in"), # not supported, closest is hi-in
     "HI_IN": ("Hindi (हिन्दी)", "hi-in"),
     "PL_PL": ("Polish (Polski)", "pl-pl"),
     "PT_BR": ("Portuguese (Português)", "pt-br"),
     "PA_IN": ("Punjabi (ਪੰਜਾਬੀ)", "pa-in"),
-    "RO_RO": ("Romanian (Română)", "ro-ro"),
-    "SO_SO": ("Somali (Soomaali)", "so-so"),
+    "RO_RO": ("Romanian (Română)", "en-us"),  # not supported by TTS
+    "SO_SO": ("Somali (Soomaali)", "en-us"),  # not supported by TTS
     "ES_ES": ("Spanish (Español)", "es-es"),
     "TA_IN": ("Tamil (தமிழ்)", "ta-in"),
     "TR_TR": ("Turkish (Türkçe)", "tr-tr"),
-    "UR_PK": ("Urdu (اردو)", "ur-pk"),
+    "UR_PK": ("Urdu (اردو)", "hi-in"),        # not supported, closest is hi-in
 }
 
 _camb_client: Optional[CambAI] = None
