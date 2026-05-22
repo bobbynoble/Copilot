@@ -1,0 +1,1 @@
+gunicorn -w 1 -k uvicorn.workers.UvicornWorker --timeout 600 nhs_translation.main:app
