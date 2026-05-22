@@ -42,5 +42,19 @@ class DubbingStatusResponse(BaseModel):
     error_message: Optional[str] = None
 
 
+class ImageTranslationRequest(BaseModel):
+    image_base64: str               # base64-encoded image data
+    image_media_type: str = "image/jpeg"   # image/jpeg | image/png | image/webp
+    target_language: str            # Languages enum name
+
+
+class ImageTranslationResponse(BaseModel):
+    success: bool
+    original_text: Optional[str] = None    # text read from the sign
+    translated_text: Optional[str] = None  # translated into target language
+    audio_base64: Optional[str] = None     # spoken translation
+    error_message: Optional[str] = None
+
+
 class HealthResponse(BaseModel):
     status: str

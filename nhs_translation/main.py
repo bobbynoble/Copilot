@@ -13,6 +13,7 @@ GET  /api/network-url               — Local network URL for QR code generation
 POST /api/session                   — Create a new consultation session
 GET  /api/session/{session_id}      — Get session info / connection status
 POST /api/translate/text            — Translate text + optional TTS
+POST /api/translate/image           — Read sign image (Claude vision) + translate + TTS
 POST /api/translate/audio           — Start audio dubbing job
 GET  /api/translate/audio/{task_id} — Poll dubbing job status
 WS   /ws/{session_id}/{role}        — Real-time nurse ↔ patient channel
@@ -38,6 +39,7 @@ from nhs_translation.agent import (
     get_dubbing_status,
     get_voices,
     start_dubbing,
+    translate_image_sign,
     translate_texts,
 )
 from nhs_translation.models import (
@@ -45,6 +47,8 @@ from nhs_translation.models import (
     DubbingStartResponse,
     DubbingStatusResponse,
     HealthResponse,
+    ImageTranslationRequest,
+    ImageTranslationResponse,
     LanguageOption,
     TextTranslationRequest,
     TextTranslationResponse,
@@ -276,3 +280,19 @@ async def dubbing_status(task_id: str) -> DubbingStatusResponse:
     except Exception as exc:
         logger.exception("Failed to fetch dubbing status for %s", task_id)
         return DubbingStatusResponse(success=False, status="ERROR", error_message=str(exc))
+
+@app.post("/api/translate/image", response_model=ImageTranslationResponse, tags=["Translation"])
+async def translate_image(body: ImageTranslationRequest) -> ImageTranslationResponse:
+    try:
+        result = await translate_image_sign(
+            body.image_base64, body.image_media_type, body.target_language
+        )
+        return ImageTranslationResponse(
+            success=True,
+            original_text=result["original_text"],
+            translated_text=result["translated_text"],
+            audio_base64=result["audio_base64"],
+        )
+    except Exception as exc:
+        logger.exception("Image translation failed")
+        return ImageTranslationResponse(success=False, error_message=str(exc))

@@ -221,3 +221,71 @@ async def get_dubbing_status(task_id: str) -> dict:
         return {"status": "ERROR", "audio_url": None}
 
     return {"status": "PENDING", "audio_url": None}
+
+
+async def translate_image_sign(
+    image_base64: str,
+    image_media_type: str,
+    target_lang: str,
+) -> dict:
+    """Read text from a sign image via Claude vision, translate it, and generate TTS.
+
+    Returns dict with: original_text, translated_text, audio_base64 (may be None).
+    """
+    client = _get_anthropic()
+    target_name = LANG_CONFIG.get(target_lang, (target_lang,))[0]
+
+    msg = await client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=512,
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": image_media_type,
+                        "data": image_base64,
+                    },
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        f"This is a photo of a hospital sign or notice. "
+                        f"1. Extract the main text from the sign exactly as written. "
+                        f"2. Translate that text into {target_name}. "
+                        f"Respond in JSON only, with keys \"original\" and \"translated\". "
+                        f"If there is no readable text, set both to empty string."
+                    ),
+                },
+            ],
+        }],
+    )
+
+    raw = msg.content[0].text.strip()
+    # Strip markdown code fences if present
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    import json
+    try:
+        parsed = json.loads(raw)
+        original_text   = parsed.get("original", "").strip()
+        translated_text = parsed.get("translated", "").strip()
+    except (json.JSONDecodeError, AttributeError):
+        original_text   = raw
+        translated_text = raw
+
+    audio_b64 = None
+    if translated_text:
+        audio_b64 = await generate_tts(translated_text, target_lang)
+
+    return {
+        "original_text":   original_text,
+        "translated_text": translated_text,
+        "audio_base64":    audio_b64,
+    }
