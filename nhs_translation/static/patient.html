@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>NHS — Patient</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green:     #009639;
+      --dark-green:#007a2f;
+      --blue:      #005EB8;
+      --pale:      #F0F4F5;
+      --mid-grey:  #AEB7BD;
+      --warm-grey: #768692;
+      --white:     #FFFFFF;
+      --red:       #DA291C;
+      --radius:    8px;
+    }
+    html, body {
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--green);
+      color: var(--white);
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 32px;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .p-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      align-self: flex-start;
+      width: 100%;
+    }
+    .nhs-logo {
+      background: var(--white); color: var(--blue);
+      font-weight: 900; font-size: 18px; letter-spacing: -1px;
+      padding: 3px 8px; border-radius: 4px;
+    }
+    .p-status {
+      font-size: 13px; font-weight: 700; opacity: 0.8;
+      margin-left: auto;
+    }
+
+    /* Message area */
+    .p-message-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      gap: 16px;
+      padding: 20px 0;
+    }
+
+    .p-from-label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    .p-message-box {
+      background: rgba(255,255,255,0.15);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 100%;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .p-message-text {
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .p-message-text.placeholder {
+      font-size: 18px;
+      font-weight: 400;
+      opacity: 0.6;
+      font-style: italic;
+    }
+
+    .p-play-btn {
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.5);
+      color: var(--white);
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: none;
+    }
+    .p-play-btn.visible { display: block; }
+    .p-play-btn:hover { background: rgba(255,255,255,0.3); }
+
+    /* Your reply */
+    .p-reply-label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+      align-self: flex-start;
+    }
+    .p-reply-text {
+      font-size: 16px;
+      font-style: italic;
+      opacity: 0.85;
+      min-height: 24px;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* Mic button */
+    .p-mic-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+    .p-mic-btn {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.2);
+      color: var(--white);
+      font-size: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .p-mic-btn:active  { transform: scale(0.95); }
+    .p-mic-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .p-mic-btn.listening {
+      background: rgba(218,41,28,0.7);
+      border-color: rgba(255,255,255,0.8);
+      animation: p-pulse 1.2s ease-in-out infinite;
+    }
+    .p-mic-btn.busy {
+      background: rgba(0,0,0,0.2);
+    }
+    @keyframes p-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+      50%      { box-shadow: 0 0 0 16px rgba(255,255,255,0); }
+    }
+    .p-mic-label {
+      font-size: 16px;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    /* Connecting overlay */
+    #connecting-overlay {
+      position: fixed; inset: 0;
+      background: var(--green);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 20px;
+      z-index: 10;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 5px solid rgba(255,255,255,0.3);
+      border-top-color: var(--white);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #connecting-overlay p { font-size: 18px; font-weight: 700; opacity: 0.85; }
+
+    /* Error screen */
+    #error-screen {
+      display: none;
+      position: fixed; inset: 0;
+      background: var(--green);
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px; padding: 32px; text-align: center;
+    }
+    #error-screen.visible { display: flex; }
+    #error-screen h2 { font-size: 22px; }
+    #error-screen p  { font-size: 15px; opacity: 0.8; }
+  </style>
+</head>
+<body>
+
+<!-- Connecting overlay -->
+<div id="connecting-overlay">
+  <div class="nhs-logo">NHS</div>
+  <div class="spinner"></div>
+  <p>Connecting…</p>
+</div>
+
+<!-- Error screen -->
+<div id="error-screen">
+  <div style="font-size:48px;">⚠️</div>
+  <h2>Session not found</h2>
+  <p>Please ask your nurse to show you the QR code again.</p>
+</div>
+
+<!-- Main UI -->
+<div class="p-header">
+  <span class="nhs-logo">NHS</span>
+  <span class="p-status" id="p-status">Connecting…</span>
+</div>
+
+<div class="p-message-area">
+  <div class="p-from-label">From your nurse:</div>
+
+  <div class="p-message-box">
+    <div class="p-message-text placeholder" id="p-message-text">
+      Waiting for nurse to speak…
+    </div>
+  </div>
+
+  <button class="p-play-btn" id="p-play-btn" onclick="replayAudio()">
+    🔊 Tap to hear again
+  </button>
+
+  <div class="p-reply-label">Your last message:</div>
+  <div class="p-reply-text" id="p-reply-text">—</div>
+</div>
+
+<div class="p-mic-wrap">
+  <button class="p-mic-btn" id="p-mic-btn" disabled onclick="toggleMic()">🎤</button>
+  <div class="p-mic-label" id="p-mic-label">Tap to speak</div>
+</div>
+
+<audio id="p-audio" style="display:none;"></audio>
+
+<script>
+  const SPEECH_LANG_MAP = {
+    EN_GB:'en-GB', AR_SA:'ar-SA', BN_BD:'bn-BD', ZH_CN:'zh-CN',
+    CY_GB:'cy-GB', FR_FR:'fr-FR', GU_IN:'gu-IN', HI_IN:'hi-IN',
+    PL_PL:'pl-PL', PT_BR:'pt-BR', PA_IN:'pa-IN', RO_RO:'ro-RO',
+    SO_SO:'so',    ES_ES:'es-ES', TA_IN:'ta-IN', TR_TR:'tr-TR',
+    UR_PK:'ur-PK',
+  };
+
+  const sessionId  = location.pathname.split('/').pop();
+  let   ws         = null;
+  let   patientLang = null;
+  let   recognition = null;
+  let   isListening = false;
+  let   finalText   = '';
+  let   lastAudioB64 = null;
+  let   nurseOnline  = false;
+
+  async function init() {
+    // Verify session exists
+    try {
+      const res  = await fetch(`/api/session/${sessionId}`);
+      if (!res.ok) { showError(); return; }
+      const data = await res.json();
+      patientLang = data.patient_lang;
+    } catch (e) { showError(); return; }
+
+    connectWS();
+  }
+
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws/${sessionId}/patient`);
+
+    ws.onopen    = () => console.log('Patient WS open');
+    ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+    ws.onclose   = () => {
+      nurseOnline = false;
+      setStatus('Disconnected');
+      document.getElementById('p-mic-btn').disabled = true;
+      // Try to reconnect after 3s
+      setTimeout(connectWS, 3000);
+    };
+    ws.onerror = () => {};
+  }
+
+  function handleMessage(msg) {
+    if (msg.type === 'ready') {
+      document.getElementById('connecting-overlay').style.display = 'none';
+      setStatus('Connected ✓');
+      document.getElementById('p-mic-btn').disabled = false;
+    } else if (msg.type === 'status') {
+      if (msg.message === 'nurse_connected') {
+        nurseOnline = true;
+        setStatus('Nurse connected ✓');
+      } else if (msg.message === 'nurse_disconnected') {
+        nurseOnline = false;
+        setStatus('Waiting for nurse…');
+      }
+    } else if (msg.type === 'translation' && msg.from_role === 'nurse') {
+      // Nurse spoke → show translation in patient's language + play audio
+      showNurseMessage(msg.translated, msg.audio_base64);
+    } else if (msg.type === 'sent') {
+      // Patient's speech confirmed — show what was translated to English
+      document.getElementById('p-reply-text').textContent = `"${msg.translated}"`;
+      setMicIdle();
+    } else if (msg.type === 'processing') {
+      setMicBusy('Translating…');
+    } else if (msg.type === 'error') {
+      setMicIdle();
+    }
+  }
+
+  function showNurseMessage(text, audioB64) {
+    const el = document.getElementById('p-message-text');
+    el.textContent = text;
+    el.classList.remove('placeholder');
+
+    if (audioB64) {
+      lastAudioB64 = audioB64;
+      const audio  = document.getElementById('p-audio');
+      audio.src    = 'data:audio/mpeg;base64,' + audioB64;
+      audio.play().catch(() => {
+        // Autoplay blocked — show replay button
+        document.getElementById('p-play-btn').classList.add('visible');
+      });
+      audio.onplay  = () => document.getElementById('p-play-btn').classList.remove('visible');
+      audio.onended = () => document.getElementById('p-play-btn').classList.add('visible');
+    }
+  }
+
+  function replayAudio() {
+    if (!lastAudioB64) return;
+    const audio = document.getElementById('p-audio');
+    audio.src   = 'data:audio/mpeg;base64,' + lastAudioB64;
+    audio.play().catch(()=>{});
+  }
+
+  function toggleMic() {
+    if (isListening) stopListening();
+    else             startListening();
+  }
+
+  function startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setMicLabel('Not supported — use Chrome');
+      return;
+    }
+    const speechCode = SPEECH_LANG_MAP[patientLang] || 'en-GB';
+    finalText   = '';
+    recognition = new SR();
+    recognition.lang           = speechCode;
+    recognition.continuous     = false;
+    recognition.interimResults = true;
+
+    recognition.onstart  = () => { isListening = true; setMicListening(); };
+    recognition.onresult = (e) => {
+      finalText = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      }
+    };
+    recognition.onerror  = () => { isListening = false; setMicIdle(); };
+    recognition.onend    = () => {
+      isListening = false;
+      if (finalText.trim()) sendSpeech(finalText.trim());
+      else setMicIdle();
+    };
+    recognition.start();
+  }
+
+  function stopListening() {
+    if (recognition) { try { recognition.stop(); } catch(_){} }
+    isListening = false;
+    setMicIdle();
+  }
+
+  function sendSpeech(text) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    setMicBusy('Sending…');
+    ws.send(JSON.stringify({
+      type:        'speech',
+      text,
+      source_lang: patientLang,
+      target_lang: 'EN_GB',
+    }));
+  }
+
+  function setStatus(msg) {
+    document.getElementById('p-status').textContent = msg;
+  }
+  function setMicListening() {
+    const btn = document.getElementById('p-mic-btn');
+    btn.className = 'p-mic-btn listening';
+    btn.textContent = '⏹';
+    setMicLabel('Tap to stop');
+  }
+  function setMicBusy(msg) {
+    const btn = document.getElementById('p-mic-btn');
+    btn.className = 'p-mic-btn busy';
+    btn.disabled  = true;
+    btn.textContent = '⏳';
+    setMicLabel(msg || 'Please wait…');
+  }
+  function setMicIdle() {
+    const btn = document.getElementById('p-mic-btn');
+    btn.className = 'p-mic-btn';
+    btn.disabled  = false;
+    btn.textContent = '🎤';
+    setMicLabel('Tap to speak');
+  }
+  function setMicLabel(msg) {
+    document.getElementById('p-mic-label').textContent = msg;
+  }
+  function showError() {
+    document.getElementById('connecting-overlay').style.display = 'none';
+    document.getElementById('error-screen').classList.add('visible');
+  }
+
+  init();
+</script>
+</body>
+</html>
