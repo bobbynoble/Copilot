@@ -547,9 +547,19 @@
   function startListening() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
-      setMicLabel('Not supported — use Chrome');
+      setMicLabel('Use Chrome or Edge browser');
       return;
     }
+
+    // Microphone permission check
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'microphone' }).then(result => {
+        if (result.state === 'denied') {
+          setMicLabel('Microphone blocked — check browser settings');
+        }
+      }).catch(() => {});
+    }
+
     const speechCode = SPEECH_LANG_MAP[patientLang] || 'en-GB';
     finalText   = '';
     recognition = new SR();
@@ -560,17 +570,38 @@
     recognition.onstart  = () => { isListening = true; setMicListening(); };
     recognition.onresult = (e) => {
       finalText = '';
+      let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
       }
+      if (interim) setMicLabel(interim);
     };
-    recognition.onerror  = () => { isListening = false; setMicIdle(); };
+    recognition.onerror = (e) => {
+      isListening = false;
+      const msgs = {
+        'not-allowed':  'Microphone blocked — tap the 🔒 icon in your browser and allow microphone',
+        'no-speech':    'No speech heard — tap again and speak clearly',
+        'network':      'Network error — check your connection',
+        'aborted':      '',
+      };
+      const label = msgs[e.error] || `Error: ${e.error}`;
+      if (label) setMicLabel(label);
+      else setMicLabel('Tap to speak');
+      setMicIdle();
+    };
     recognition.onend    = () => {
       isListening = false;
       if (finalText.trim()) sendSpeech(finalText.trim());
       else setMicIdle();
     };
-    recognition.start();
+
+    try {
+      recognition.start();
+    } catch (err) {
+      setMicLabel('Could not start microphone — try again');
+      setMicIdle();
+    }
   }
 
   function stopListening() {
