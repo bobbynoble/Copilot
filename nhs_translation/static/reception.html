@@ -213,6 +213,7 @@
   <span class="nhs-logo">NHS</span>
   <h1>Reception Desk</h1>
   <button class="end-btn" id="end-btn" onclick="endSession()">End Session</button>
+  <button class="end-btn" id="download-btn" onclick="downloadTranscript()" style="background:rgba(0,94,184,0.85);">📄 Download Transcript</button>
 </header>
 
 <main>
@@ -294,6 +295,9 @@
   let isListening   = false;
   let finalText     = '';
   let patientOnline = false;
+  let transcript    = [];   // { time, role, original, translated }
+  let sessionStart  = null;
+  let patientLangName = '';
 
   // Load languages
   async function init() {
@@ -317,7 +321,10 @@
       body: JSON.stringify({patient_lang: patientLang}),
     });
     const data = await res.json();
-    sessionId  = data.session_id;
+    sessionId      = data.session_id;
+    sessionStart   = new Date();
+    transcript     = [];
+    patientLangName = data.patient_lang_name || patientLang;
 
     // Build patient URL
     const netRes    = await fetch('/api/network-url');
@@ -440,17 +447,23 @@
   }
 
   function addMessage(role, original, translated) {
+    const now   = new Date();
+    transcript.push({ time: now, role, original, translated });
+
     const convo = document.getElementById('conversation');
     const div   = document.createElement('div');
     div.className = `msg ${role}`;
     const label = role === 'nurse' ? 'You (Nurse)' : 'Patient';
+    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     div.innerHTML = `
-      <div class="msg-meta">${label}</div>
+      <div class="msg-meta">${label} · ${timeStr}</div>
       <div class="msg-bubble">${escHtml(original)}</div>
       <div class="msg-translation">→ ${escHtml(translated)}</div>
     `;
     convo.appendChild(div);
     convo.scrollTop = convo.scrollHeight;
+
+    document.getElementById('download-btn').classList.add('visible');
   }
 
   function setStatus(type, text) {
@@ -480,12 +493,65 @@
     document.getElementById('mic-status').textContent = msg;
   }
 
+  function downloadTranscript() {
+    if (!transcript.length) return;
+
+    const dateStr  = (sessionStart || new Date()).toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'long', year: 'numeric',
+    });
+    const startStr = (sessionStart || new Date()).toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const lines = [
+      '================================================================',
+      'NHS TRANSLATION SESSION TRANSCRIPT',
+      '================================================================',
+      `Date:             ${dateStr}`,
+      `Session start:    ${startStr}`,
+      `Patient language: ${patientLangName}`,
+      `Session ID:       ${sessionId || 'N/A'}`,
+      '----------------------------------------------------------------',
+      'DISCLAIMER: This transcript was produced by an AI translation',
+      'service and may not be 100% accurate. It is intended as a',
+      'communication aid only and does not constitute a clinical record.',
+      '================================================================',
+      '',
+    ];
+
+    for (const msg of transcript) {
+      const timeStr = msg.time.toLocaleTimeString('en-GB', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      });
+      const speaker = msg.role === 'nurse' ? 'NURSE   ' : 'PATIENT ';
+      lines.push(`[${timeStr}] ${speaker}`);
+      lines.push(`  Original:    ${msg.original}`);
+      lines.push(`  Translation: ${msg.translated}`);
+      lines.push('');
+    }
+
+    lines.push('================================================================');
+    lines.push('End of transcript');
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const filename = `NHS-Translation-${(sessionStart || new Date()).toISOString().slice(0,10)}.txt`;
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function endSession() {
     if (ws) ws.close();
     sessionId = null;
+    transcript = [];
     document.getElementById('active-screen').style.display = 'none';
     document.getElementById('setup-screen').style.display  = 'block';
     document.getElementById('end-btn').classList.remove('visible');
+    document.getElementById('download-btn').classList.remove('visible');
     document.getElementById('qr-box').innerHTML = '';
     document.getElementById('conversation').innerHTML =
       '<div class="empty-convo" id="empty-msg">Conversation will appear here once the patient connects…</div>';
