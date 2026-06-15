@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NHS Reception Desk</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue:      #005EB8;
+      --dark-blue: #003087;
+      --green:     #009639;
+      --red:       #DA291C;
+      --pale:      #F0F4F5;
+      --mid-grey:  #AEB7BD;
+      --warm-grey: #768692;
+      --white:     #FFFFFF;
+      --radius:    4px;
+    }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+      background: var(--pale);
+      color: #212b32;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: var(--blue);
+      color: var(--white);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 60px;
+    }
+    .nhs-logo {
+      background: var(--white); color: var(--blue);
+      font-weight: 900; font-size: 20px; letter-spacing: -1px;
+      padding: 3px 9px; border-radius: var(--radius); flex-shrink: 0;
+    }
+    header h1 { font-size: 18px; font-weight: 700; }
+    .end-btn {
+      margin-left: auto;
+      background: rgba(218,41,28,0.85);
+      color: var(--white); border: none;
+      padding: 7px 16px; border-radius: var(--radius);
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: none;
+    }
+    .end-btn:hover { background: var(--red); }
+    .end-btn.visible { display: block; }
+
+    main {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 24px;
+    }
+
+    /* Setup screen */
+    #setup-screen label { font-weight: 700; display: block; margin-bottom: 8px; font-size: 15px; }
+    #setup-screen select {
+      width: 100%; max-width: 320px;
+      padding: 10px 12px;
+      border: 2px solid var(--mid-grey);
+      border-radius: var(--radius);
+      font-size: 15px; margin-bottom: 18px;
+    }
+    .start-btn {
+      background: var(--green); color: var(--white);
+      border: none; padding: 14px 32px;
+      border-radius: var(--radius);
+      font-size: 17px; font-weight: 700; cursor: pointer;
+    }
+    .start-btn:hover { opacity: 0.9; }
+
+    /* Status bar */
+    .status-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; border-radius: var(--radius);
+      font-weight: 700; font-size: 15px;
+    }
+    .status-bar.waiting  { background: #fff3cd; color: #856404; }
+    .status-bar.connected { background: #d4edda; color: #155724; }
+    .status-bar.disconnected { background: #f8d7da; color: #721c24; }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-bar.waiting .status-dot    { background: #ffc107; animation: blink 1.2s infinite; }
+    .status-bar.connected .status-dot  { background: #28a745; }
+    .status-bar.disconnected .status-dot { background: var(--red); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* QR section */
+    .qr-row {
+      display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap;
+    }
+    #qr-box { flex-shrink: 0; }
+    .qr-info h3 { font-size: 16px; color: var(--blue); margin-bottom: 6px; }
+    .qr-info p  { font-size: 14px; color: var(--warm-grey); margin-bottom: 10px; }
+    .qr-url {
+      font-size: 13px; word-break: break-all;
+      color: var(--blue); font-weight: 700;
+      background: var(--pale); padding: 8px 10px;
+      border-radius: var(--radius);
+    }
+
+    /* Conversation */
+    #conversation {
+      display: flex; flex-direction: column; gap: 12px;
+      max-height: 340px; overflow-y: auto;
+      padding: 4px 0;
+    }
+    .msg {
+      display: flex; flex-direction: column; gap: 3px;
+      max-width: 80%;
+    }
+    .msg.nurse   { align-self: flex-end; align-items: flex-end; }
+    .msg.patient { align-self: flex-start; align-items: flex-start; }
+    .msg-bubble {
+      padding: 10px 14px; border-radius: 12px;
+      font-size: 15px; line-height: 1.5;
+    }
+    .msg.nurse   .msg-bubble { background: var(--blue);  color: var(--white); border-bottom-right-radius: 4px; }
+    .msg.patient .msg-bubble { background: var(--green); color: var(--white); border-bottom-left-radius: 4px; }
+    .msg-meta {
+      font-size: 12px; color: var(--warm-grey);
+      padding: 0 4px;
+    }
+    .msg-translation {
+      font-size: 13px; font-style: italic;
+      color: var(--warm-grey); padding: 0 4px;
+    }
+    .empty-convo {
+      text-align: center; color: var(--mid-grey);
+      font-size: 14px; padding: 32px 0;
+    }
+
+    /* Mic area */
+    .mic-area {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 0 0;
+      border-top: 1px solid var(--pale);
+      margin-top: 8px;
+    }
+    .mic-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 28px;
+      background: var(--blue); color: var(--white);
+      border: none; border-radius: 50px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .mic-btn:hover:not(:disabled)  { opacity: 0.9; }
+    .mic-btn:active                 { transform: scale(0.97); }
+    .mic-btn:disabled               { opacity: 0.45; cursor: not-allowed; }
+    .mic-btn.listening {
+      background: var(--red);
+      animation: mic-pulse 1.2s ease-in-out infinite;
+    }
+    .mic-btn.busy { background: var(--warm-grey); }
+    @keyframes mic-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(218,41,28,0.4); }
+      50%      { box-shadow: 0 0 0 12px rgba(218,41,28,0); }
+    }
+    .mic-status { font-size: 14px; color: var(--warm-grey); font-weight: 700; }
+
+    /* Safeguarding alert banner */
+    #safeguarding-banner {
+      display: none;
+      background: #fff3cd;
+      border-left: 5px solid #ffc107;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      gap: 12px;
+    }
+    #safeguarding-banner.visible { display: flex; align-items: flex-start; }
+    .sg-icon { font-size: 22px; flex-shrink: 0; }
+    .sg-body h4 { font-size: 15px; font-weight: 700; color: #856404; margin-bottom: 4px; }
+    .sg-body p  { font-size: 14px; color: #856404; margin: 0; }
+    .sg-dismiss {
+      margin-left: auto; background: none; border: none;
+      font-size: 18px; cursor: pointer; color: #856404; flex-shrink: 0;
+    }
+
+    #active-screen { display: none; }
+    footer {
+      text-align: center; padding: 16px;
+      font-size: 12px; color: var(--warm-grey);
+      border-top: 1px solid var(--mid-grey);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="nhs-logo">NHS</span>
+  <h1>Reception Desk</h1>
+  <button class="end-btn" id="end-btn" onclick="endSession()">End Session</button>
+  <button class="end-btn" id="download-btn" onclick="downloadTranscript()" style="background:rgba(0,94,184,0.85);">📄 Download Transcript</button>
+</header>
+
+<main>
+
+  <!-- ── Setup ── -->
+  <div class="card" id="setup-screen">
+    <h2 style="font-size:18px;margin-bottom:16px;color:var(--blue);">Start a new patient consultation</h2>
+    <label for="patient-lang-select">Patient's language</label>
+    <select id="patient-lang-select"></select>
+    <br>
+    <button class="start-btn" onclick="startSession()">Start Session →</button>
+  </div>
+
+  <!-- ── Active session ── -->
+  <div id="active-screen">
+
+    <!-- Status -->
+    <div class="status-bar waiting" id="status-bar">
+      <span class="status-dot"></span>
+      <span id="status-text">Waiting for patient to scan QR…</span>
+    </div>
+
+    <!-- QR -->
+    <div class="card" id="qr-card">
+      <div class="qr-row">
+        <div id="qr-box"></div>
+        <div class="qr-info">
+          <h3>📱 Ask the patient to scan this code</h3>
+          <p>They will see the app in their language on their phone.</p>
+          <div class="qr-url" id="qr-url-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Safeguarding alert -->
+    <div id="safeguarding-banner">
+      <span class="sg-icon">⚠️</span>
+      <div class="sg-body">
+        <h4>Safeguarding concern detected</h4>
+        <p id="sg-alert-text"></p>
+      </div>
+      <button class="sg-dismiss" onclick="dismissSafeguarding()" title="Dismiss">✕</button>
+    </div>
+
+    <!-- Conversation -->
+    <div class="card">
+      <div id="conversation">
+        <div class="empty-convo" id="empty-msg">Conversation will appear here once the patient connects…</div>
+      </div>
+      <div class="mic-area">
+        <button class="mic-btn" id="mic-btn" disabled onclick="toggleMic()">
+          🎤 Speak to patient
+        </button>
+        <span class="mic-status" id="mic-status"></span>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>NHS Translation Assistant — for demonstration purposes only</footer>
+
+<audio id="nurse-audio" style="display:none;"></audio>
+
+<script>
+  const SPEECH_LANG_MAP = {
+    EN_GB:'en-GB', AR_SA:'ar-SA', BN_BD:'bn-BD', ZH_CN:'zh-CN',
+    CY_GB:'cy-GB', FR_FR:'fr-FR', GU_IN:'gu-IN', HI_IN:'hi-IN',
+    PL_PL:'pl-PL', PT_BR:'pt-BR', PA_IN:'pa-IN', RO_RO:'ro-RO',
+    SO_SO:'so',    ES_ES:'es-ES', TA_IN:'ta-IN', TR_TR:'tr-TR',
+    UR_PK:'ur-PK',
+  };
+
+  let ws            = null;
+  let sessionId     = null;
+  let patientLang   = null;
+  let recognition   = null;
+  let isListening   = false;
+  let finalText     = '';
+  let patientOnline = false;
+  let transcript    = [];   // { time, role, original, translated }
+  let sessionStart  = null;
+  let patientLangName = '';
+
+  // Load languages
+  async function init() {
+    const res  = await fetch('/api/languages');
+    const langs = await res.json();
+    const sel  = document.getElementById('patient-lang-select');
+    langs.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l.code; o.textContent = l.name;
+      if (l.code === 'AR_SA') o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  async function startSession() {
+    patientLang = document.getElementById('patient-lang-select').value;
+
+    const res  = await fetch('/api/session', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({patient_lang: patientLang}),
+    });
+    const data = await res.json();
+    sessionId      = data.session_id;
+    sessionStart   = new Date();
+    transcript     = [];
+    patientLangName = data.patient_lang_name || patientLang;
+
+    // Build patient URL
+    const netRes    = await fetch('/api/network-url');
+    const netData   = await netRes.json();
+    const patientUrl = `${netData.url}/patient/${sessionId}`;
+
+    // Show active screen
+    document.getElementById('setup-screen').style.display  = 'none';
+    document.getElementById('active-screen').style.display = 'block';
+    document.getElementById('end-btn').classList.add('visible');
+
+    // QR code
+    document.getElementById('qr-url-text').textContent = patientUrl;
+    new QRCode(document.getElementById('qr-box'), {
+      text: patientUrl, width: 160, height: 160,
+      colorDark: '#003087', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+
+    // Connect WebSocket
+    connectWS();
+  }
+
+  function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws/${sessionId}/nurse`);
+
+    ws.onopen    = () => console.log('WS connected');
+    ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+    ws.onclose   = () => {
+      setStatus('disconnected', 'Disconnected — refresh to reconnect');
+      document.getElementById('mic-btn').disabled = true;
+    };
+  }
+
+  function handleMessage(msg) {
+    if (msg.type === 'status') {
+      if (msg.message === 'patient_connected') {
+        patientOnline = true;
+        setStatus('connected', 'Patient connected ✓');
+        document.getElementById('mic-btn').disabled = false;
+        document.getElementById('qr-card').style.display = 'none';
+        document.getElementById('empty-msg').style.display = 'none';
+      } else if (msg.message === 'patient_disconnected') {
+        patientOnline = false;
+        setStatus('waiting', 'Patient disconnected — waiting to reconnect…');
+        document.getElementById('mic-btn').disabled = true;
+      }
+    } else if (msg.type === 'processing') {
+      setMicStatus('Translating…');
+    } else if (msg.type === 'sent') {
+      addMessage('nurse', msg.original, msg.translated);
+      setMicStatus('');
+      setMicIdle();
+    } else if (msg.type === 'translation' && msg.from_role === 'patient') {
+      addMessage('patient', msg.original, msg.translated);
+      // Play patient's words in English for the nurse
+      if (msg.audio_base64) {
+        const audio = document.getElementById('nurse-audio');
+        audio.src = 'data:audio/mpeg;base64,' + msg.audio_base64;
+        audio.play().catch(()=>{});
+      }
+    } else if (msg.type === 'safeguarding_alert') {
+      showSafeguarding(msg.alert);
+    } else if (msg.type === 'error') {
+      setMicStatus('Error: ' + msg.message);
+      setMicIdle();
+    }
+  }
+
+  function toggleMic() {
+    if (isListening) stopListening();
+    else             startListening();
+  }
+
+  function startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('Use Chrome or Edge for voice input.'); return; }
+
+    finalText   = '';
+    recognition = new SR();
+    recognition.lang            = 'en-GB';
+    recognition.continuous      = false;
+    recognition.interimResults  = true;
+
+    recognition.onstart  = () => { isListening = true; setMicListening(); };
+    recognition.onresult = (e) => {
+      finalText = '';
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      setMicStatus(finalText || interim || 'Listening…');
+    };
+    recognition.onerror  = () => { isListening = false; setMicIdle(); };
+    recognition.onend    = () => {
+      isListening = false;
+      if (finalText.trim()) sendSpeech(finalText.trim());
+      else { setMicStatus(''); setMicIdle(); }
+    };
+    recognition.start();
+  }
+
+  function stopListening() {
+    if (recognition) { try { recognition.stop(); } catch(_){} }
+    isListening = false;
+    setMicIdle();
+  }
+
+  function sendSpeech(text) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    setMicBusy();
+    ws.send(JSON.stringify({
+      type:        'speech',
+      text,
+      source_lang: 'EN_GB',
+      target_lang: patientLang,
+    }));
+  }
+
+  function addMessage(role, original, translated) {
+    const now   = new Date();
+    transcript.push({ time: now, role, original, translated });
+
+    const convo = document.getElementById('conversation');
+    const div   = document.createElement('div');
+    div.className = `msg ${role}`;
+    const label = role === 'nurse' ? 'You (Nurse)' : 'Patient';
+    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    div.innerHTML = `
+      <div class="msg-meta">${label} · ${timeStr}</div>
+      <div class="msg-bubble">${escHtml(original)}</div>
+      <div class="msg-translation">→ ${escHtml(translated)}</div>
+    `;
+    convo.appendChild(div);
+    convo.scrollTop = convo.scrollHeight;
+
+    document.getElementById('download-btn').classList.add('visible');
+  }
+
+  function setStatus(type, text) {
+    const bar = document.getElementById('status-bar');
+    bar.className = `status-bar ${type}`;
+    document.getElementById('status-text').textContent = text;
+  }
+
+  function setMicListening() {
+    const btn = document.getElementById('mic-btn');
+    btn.className = 'mic-btn listening';
+    btn.textContent = '⏹ Tap to stop';
+  }
+  function setMicBusy() {
+    const btn = document.getElementById('mic-btn');
+    btn.className = 'mic-btn busy';
+    btn.disabled  = true;
+    btn.textContent = '⏳ Translating…';
+  }
+  function setMicIdle() {
+    const btn = document.getElementById('mic-btn');
+    btn.className = 'mic-btn';
+    btn.disabled  = !patientOnline;
+    btn.innerHTML = '🎤 Speak to patient';
+  }
+  function setMicStatus(msg) {
+    document.getElementById('mic-status').textContent = msg;
+  }
+
+  function downloadTranscript() {
+    if (!transcript.length) return;
+
+    const dateStr  = (sessionStart || new Date()).toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'long', year: 'numeric',
+    });
+    const startStr = (sessionStart || new Date()).toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const lines = [
+      '================================================================',
+      'NHS TRANSLATION SESSION TRANSCRIPT',
+      '================================================================',
+      `Date:             ${dateStr}`,
+      `Session start:    ${startStr}`,
+      `Patient language: ${patientLangName}`,
+      `Session ID:       ${sessionId || 'N/A'}`,
+      '----------------------------------------------------------------',
+      'DISCLAIMER: This transcript was produced by an AI translation',
+      'service and may not be 100% accurate. It is intended as a',
+      'communication aid only and does not constitute a clinical record.',
+      '================================================================',
+      '',
+    ];
+
+    for (const msg of transcript) {
+      const timeStr = msg.time.toLocaleTimeString('en-GB', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      });
+      const speaker = msg.role === 'nurse' ? 'NURSE   ' : 'PATIENT ';
+      lines.push(`[${timeStr}] ${speaker}`);
+      lines.push(`  Original:    ${msg.original}`);
+      lines.push(`  Translation: ${msg.translated}`);
+      lines.push('');
+    }
+
+    lines.push('================================================================');
+    lines.push('End of transcript');
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const filename = `NHS-Translation-${(sessionStart || new Date()).toISOString().slice(0,10)}.txt`;
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function endSession() {
+    if (ws) ws.close();
+    sessionId = null;
+    transcript = [];
+    document.getElementById('active-screen').style.display = 'none';
+    document.getElementById('setup-screen').style.display  = 'block';
+    document.getElementById('end-btn').classList.remove('visible');
+    document.getElementById('download-btn').classList.remove('visible');
+    document.getElementById('qr-box').innerHTML = '';
+    document.getElementById('conversation').innerHTML =
+      '<div class="empty-convo" id="empty-msg">Conversation will appear here once the patient connects…</div>';
+    document.getElementById('qr-card').style.display = 'block';
+  }
+
+  function showSafeguarding(alert) {
+    document.getElementById('sg-alert-text').textContent = alert;
+    document.getElementById('safeguarding-banner').classList.add('visible');
+    // Also play a soft alert sound via the browser
+    try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAA==').play(); } catch(_){}
+  }
+  function dismissSafeguarding() {
+    document.getElementById('safeguarding-banner').classList.remove('visible');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  init();
+</script>
+</body>
+</html>
