@@ -30,10 +30,23 @@ def main() -> None:
     ENV_PATH.write_bytes(("\n".join(lines) + "\n").encode("utf-8"))
     print(f"Rewrote {ENV_PATH} as plain UTF-8 (no BOM).\n")
 
+    # Show raw structure of each non-comment line (values masked) to spot hidden characters.
+    print("Line-by-line breakdown (KEY repr -> value length):")
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            print(f"  SKIPPED (no '='): {stripped!r}")
+            continue
+        key, _, value = stripped.partition("=")
+        print(f"  key={key!r}  value_len={len(value)}")
+
     # Now verify the keys load correctly.
     from dotenv import load_dotenv
     load_dotenv(ENV_PATH, override=True)
 
+    print("\nos.environ lookup results:")
     for key in ("ANTHROPIC_API_KEY", "CAMB_API_KEY", "ELEVENLABS_API_KEY"):
         value = os.getenv(key)
         if not value:
